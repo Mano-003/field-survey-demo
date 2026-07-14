@@ -1,0 +1,1857 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>初期調査・売主確認｜不動産売却案件ハブ</title>
+  <style>
+    :root {
+      --navy: #142842;
+      --navy-2: #203b5d;
+      --gold: #b18a3d;
+      --gold-soft: #f4ecd9;
+      --bg: #f3f5f7;
+      --white: #fff;
+      --text: #17202a;
+      --muted: #687381;
+      --line: #dce1e7;
+      --danger: #a83838;
+      --danger-soft: #fff0f0;
+      --warn: #9a6515;
+      --warn-soft: #fff7e6;
+      --success: #27704b;
+      --success-soft: #eaf7ef;
+      --shadow: 0 5px 18px rgba(20,40,66,.08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--navy); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+      line-height: 1.55;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      color: #fff;
+      background: var(--navy);
+      padding: max(12px, env(safe-area-inset-top)) 16px 12px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.16);
+    }
+    .brand { font-size: 13px; letter-spacing: .05em; color: #e8d7aa; }
+    .context { display: flex; gap: 16px; margin-top: 5px; font-size: 14px; font-weight: 700; }
+    .context span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    main { width: min(100%, 760px); margin: auto; padding: 18px 14px 116px; }
+    .screen { display: none; }
+    .screen.active { display: block; animation: appear .16s ease-out; }
+    @keyframes appear { from { opacity: .5; transform: translateY(3px); } }
+    h1 { margin: 0 0 4px; font-size: 23px; color: var(--navy); }
+    .lead { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+    .card {
+      margin-bottom: 14px;
+      padding: 17px;
+      border: 1px solid #e5e8ec;
+      border-radius: var(--radius);
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .card-title { margin: 0 0 12px; font-size: 17px; color: var(--navy); }
+    .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .metric { padding: 14px; border-radius: 12px; background: #f6f8fa; }
+    .metric.wide { grid-column: 1 / -1; }
+    .metric-label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 12px; }
+    .metric-value { font-size: 20px; font-weight: 800; color: var(--navy); }
+    .metric-value.danger { color: var(--danger); }
+    .metric-value.warn { color: var(--warn); }
+    .progress-track { height: 8px; margin-top: 10px; overflow: hidden; border-radius: 8px; background: #e2e7ec; }
+    .progress-bar { height: 100%; width: 0; background: var(--gold); transition: width .2s; }
+    label.field { display: block; margin-bottom: 15px; }
+    .field-name { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 700; color: var(--navy); }
+    .field-hint { color: var(--muted); font-weight: 400; }
+    input, select, textarea {
+      width: 100%;
+      min-height: 48px;
+      padding: 11px 12px;
+      border: 1px solid #cbd2da;
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(177,138,61,.16); }
+    input[readonly] { background: #f2f4f6; color: #4b5561; }
+    textarea { min-height: 92px; resize: vertical; }
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+    .item-card { padding: 0; overflow: hidden; }
+    .item-summary {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      width: 100%;
+      padding: 16px;
+      border: 0;
+      text-align: left;
+      background: #fff;
+      color: var(--text);
+    }
+    .item-card.open .item-summary { border-bottom: 1px solid var(--line); }
+    .item-number {
+      display: grid;
+      flex: 0 0 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--navy);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .item-heading { flex: 1; min-width: 0; }
+    .item-label { display: block; font-weight: 800; color: var(--navy); }
+    .item-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+    .chevron { color: var(--gold); font-size: 20px; transition: transform .2s; }
+    .item-card.open .chevron { transform: rotate(180deg); }
+    .item-body { display: none; padding: 16px; background: #fcfcfb; }
+    .item-card.open .item-body { display: block; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #eef1f4;
+      color: #596472;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .badge.required { background: var(--danger-soft); color: var(--danger); }
+    .badge.important { background: var(--warn-soft); color: var(--warn); }
+    .badge.optional { background: #eef1f4; color: #52606d; }
+    .badge.done, .badge.na { background: var(--success-soft); color: var(--success); }
+    .badge.recheck { background: var(--warn-soft); color: var(--warn); }
+    .badge.unchecked { background: var(--danger-soft); color: var(--danger); }
+    .master-box {
+      margin: 2px 0 15px;
+      padding: 12px;
+      border-left: 3px solid var(--gold);
+      border-radius: 8px;
+      background: var(--gold-soft);
+      font-size: 13px;
+    }
+    .master-box div + div { margin-top: 6px; }
+    .master-box strong { color: var(--navy); }
+    .task-row { display: flex; gap: 11px; align-items: flex-start; }
+    .task-row + .task-row { margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--line); }
+    .task-content { flex: 1; }
+    .task-title { font-weight: 800; color: var(--navy); }
+    .task-status { margin-top: 3px; font-size: 13px; color: var(--muted); }
+    .empty { padding: 26px 10px; text-align: center; color: var(--success); font-weight: 700; }
+    .notice { padding: 13px; border-radius: 10px; background: #eef3f8; color: #33465d; font-size: 13px; }
+    .notice.warning { background: var(--warn-soft); color: #744b0f; }
+    .action-row { display: grid; gap: 10px; margin-top: 14px; }
+    .btn {
+      min-height: 50px;
+      padding: 11px 16px;
+      border: 1px solid var(--navy);
+      border-radius: 11px;
+      background: var(--navy);
+      color: #fff;
+      font-weight: 800;
+    }
+    .btn.secondary { color: var(--navy); background: #fff; }
+    .btn.gold { border-color: var(--gold); background: var(--gold); color: #fff; }
+    .btn:active { transform: translateY(1px); }
+    .file-label { display: grid; place-items: center; min-height: 50px; border: 1px solid var(--navy); border-radius: 11px; color: var(--navy); font-weight: 800; background: #fff; cursor: pointer; }
+    .file-label input { display: none; }
+    .save-bar {
+      position: fixed;
+      right: 0;
+      bottom: 67px;
+      left: 0;
+      z-index: 15;
+      display: flex;
+      justify-content: center;
+      padding: 9px 14px;
+      pointer-events: none;
+    }
+    #saveButton { width: min(calc(100% - 28px), 732px); box-shadow: 0 5px 18px rgba(20,40,66,.25); pointer-events: auto; }
+    .bottom-nav {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      padding-bottom: env(safe-area-inset-bottom);
+      border-top: 1px solid #d5dae0;
+      background: #fff;
+    }
+    .nav-btn {
+      min-height: 66px;
+      padding: 7px 2px 5px;
+      border: 0;
+      background: #fff;
+      color: #687381;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .nav-icon { display: block; margin-bottom: 1px; font-size: 20px; line-height: 1.2; }
+    .nav-btn.active { color: var(--navy); box-shadow: inset 0 3px var(--gold); }
+    .toast {
+      position: fixed;
+      top: 86px;
+      left: 50%;
+      z-index: 50;
+      width: max-content;
+      max-width: calc(100% - 30px);
+      padding: 10px 16px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(20,40,66,.95);
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      font-weight: 700;
+      transform: translate(-50%, -12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s;
+    }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+    .required-mark { color: var(--danger); }
+    .sub-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0 0 14px; }
+    .sub-tab { min-height: 48px; padding: 6px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .sub-tab.active { border-color: var(--gold); background: var(--navy); color: #fff; }
+    .check-panel { display: none; }
+    .check-panel.active { display: block; }
+    .section-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px 2px 8px; border: 0; background: transparent; color: var(--navy); text-align: left; font-weight: 800; }
+    .section-head .section-count { margin-left: auto; padding: 2px 8px; border-radius: 999px; background: #e9edf1; color: var(--muted); font-size: 11px; }
+    .question-card { padding: 14px; }
+    .question-label { margin-bottom: 10px; font-weight: 800; color: var(--navy); }
+    .question-sub { margin: -6px 0 10px; color: var(--muted); font-size: 12px; }
+    .tap-options, .chip-options { display: flex; flex-wrap: wrap; gap: 7px; }
+    .tap-option, .chip-option { min-height: 42px; padding: 8px 13px; border: 1.5px solid #cbd2da; border-radius: 9px; background: #fff; color: #4c5866; font-weight: 700; }
+    .tap-option.selected, .chip-option.selected { border-color: var(--navy); background: var(--navy); color: #fff; }
+    .tap-option.marker-warning.selected { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
+    .tap-option.marker-caution.selected { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+    .detail-block { margin-top: 11px; padding: 12px; border-left: 3px solid var(--gold); border-radius: 9px; background: #f5f7fa; }
+    .detail-field + .detail-field { margin-top: 10px; }
+    .detail-label { margin-bottom: 5px; color: var(--navy); font-size: 12px; font-weight: 700; }
+    .note-toggle { margin-top: 10px; border: 0; background: transparent; color: var(--warn); font-weight: 700; }
+    .question-note { display: none; margin-top: 8px; }
+    .question-note.open { display: block; }
+    .document-meta { display: grid; grid-template-columns: 1fr; gap: 0; }
+    .confirm-check { display: flex; gap: 10px; align-items: flex-start; padding: 13px; border: 1px solid var(--gold); border-radius: 10px; background: var(--gold-soft); }
+    .confirm-check input { flex: 0 0 22px; width: 22px; min-height: 22px; margin-top: 1px; }
+    .legal-note { margin-bottom: 12px; padding: 12px; border: 1px solid #e5d3a8; border-radius: 10px; background: #fff9ea; color: #624a1e; font-size: 13px; }
+    .related { margin-top: 10px; color: var(--navy-2); font-size: 12px; }
+    .summary-block + .summary-block { margin-top: 14px; }
+    .summary-list { margin: 7px 0 0; padding-left: 20px; color: var(--muted); font-size: 13px; }
+    .road-type-options { display: grid; gap: 7px; }
+    .road-type-button { width: 100%; min-height: 48px; padding: 10px 12px; border: 1.5px solid #cbd2da; border-radius: 10px; background: #fff; color: var(--text); text-align: left; font-size: 13px; font-weight: 700; }
+    .road-type-button.selected { border-color: var(--navy); background: var(--navy); color: #fff; }
+    .road-type-code { display: inline-block; min-width: 3.4em; color: var(--gold); font-weight: 900; }
+    @media (min-width: 640px) {
+      main { padding-top: 26px; }
+      .form-grid { grid-template-columns: 1fr 1fr; gap: 0 14px; }
+      .action-row { grid-template-columns: 1fr 1fr; }
+      .metric-grid { grid-template-columns: repeat(4, 1fr); }
+      .metric.wide { grid-column: span 2; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">不動産売却案件ハブ｜初期調査・売主確認 MVP①</div>
+    <div class="context">
+      <span>案件ID：<b id="contextCaseId">未入力</b></span>
+      <span>物件ID：<b id="contextPropertyId">未入力</b></span>
+    </div>
+  </header>
+
+  <main>
+    <section id="screen-top" class="screen active" aria-labelledby="top-title">
+      <h1 id="top-title">案件ハブTOP</h1>
+      <p class="lead">通常の売却案件・現地調査の状況</p>
+      <div class="card">
+        <h2 class="card-title">案件情報</h2>
+        <div class="metric-grid">
+          <div class="metric"><span class="metric-label">案件ID</span><span class="metric-value" id="topCaseId">未入力</span></div>
+          <div class="metric"><span class="metric-label">物件ID</span><span class="metric-value" id="topPropertyId">未入力</span></div>
+          <div class="metric wide"><span class="metric-label">案件ステータス</span><span class="metric-value" id="topCaseStatus">未入力</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">現地調査進捗</h2>
+        <div class="metric-value" id="progressText">現地確認実施 0/5</div>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="metric-grid" style="margin-top:14px">
+          <div class="metric"><span class="metric-label">確認済</span><span class="metric-value" id="confirmedCount">0件</span></div>
+          <div class="metric"><span class="metric-label">追加確認あり</span><span class="metric-value warn" id="additionalCount">0件</span></div>
+          <div class="metric"><span class="metric-label">未確認</span><span class="metric-value danger" id="uncheckedCount">5件</span></div>
+          <div class="metric"><span class="metric-label">該当なし</span><span class="metric-value" id="naCount">0件</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">次に確認する項目</h2>
+        <div id="nextItem"></div>
+      </div>
+      <div class="notice warning">現地調査結果は現地確認メモです。法令・権利関係や説明事項の確定を自動判定するものではありません。</div>
+    </section>
+
+    <section id="screen-header" class="screen" aria-labelledby="header-title">
+      <h1 id="header-title">案件ヘッダー入力</h1>
+      <p class="lead">案件を識別する共通情報</p>
+      <div class="card form-grid">
+        <label class="field"><span class="field-name">案件ID <span class="required-mark">必須</span></span><input id="caseId" data-header="caseId" autocomplete="off"></label>
+        <label class="field"><span class="field-name">顧客ID</span><input id="customerId" data-header="customerId" autocomplete="off"></label>
+        <label class="field"><span class="field-name">物件ID <span class="required-mark">必須</span></span><input id="propertyId" data-header="propertyId" autocomplete="off"></label>
+        <label class="field"><span class="field-name">案件種別</span><input id="caseType" data-header="caseType" value="売却" readonly></label>
+        <label class="field"><span class="field-name">担当者</span><input id="staff" data-header="staff" autocomplete="name"></label>
+        <label class="field"><span class="field-name">案件ステータス</span><input id="status" data-header="status" autocomplete="off" placeholder="案件ステータスを入力"></label>
+        <label class="field"><span class="field-name">作成日</span><input id="createdAt" data-header="createdAt" type="date"></label>
+        <label class="field"><span class="field-name">更新日時</span><input id="updatedAt" data-header="updatedAt" readonly></label>
+      </div>
+    </section>
+
+    <section id="screen-survey" class="screen" aria-labelledby="survey-title">
+      <h1 id="survey-title">初期調査・売主確認</h1>
+      <p class="lead">現地調査・付帯設備表・物件状況確認書／告知書</p>
+      <div class="legal-note">本画面は現地確認および売主回答の記録用です。入力内容から告知要否、重要事項説明書への記載要否、契約不適合責任、法令・権利関係を自動判断しません。</div>
+      <div class="sub-tabs">
+        <button type="button" class="sub-tab active" data-check-tab="site">現地調査</button>
+        <button type="button" class="sub-tab" data-check-tab="disclosure">物件状況確認書<br>／告知書</button>
+        <button type="button" class="sub-tab" data-check-tab="equipment">付帯設備表</button>
+      </div>
+      <div id="panel-site" class="check-panel active"><div id="surveyItems"></div></div>
+      <div id="panel-disclosure" class="check-panel">
+        <div class="card document-meta">
+          <label class="field"><span class="field-name">回答者 <span class="field-hint">売主回答者</span></span><input data-disclosure-meta="respondent"></label>
+          <label class="field"><span class="field-name">入力者 <span class="field-hint">代理入力した営業担当者</span></span><input data-disclosure-meta="enteredBy"></label>
+          <label class="field"><span class="field-name">回答日</span><input type="date" data-disclosure-meta="answeredDate"></label>
+        </div>
+        <div id="disclosureItems"></div>
+      </div>
+      <div id="panel-equipment" class="check-panel">
+        <div class="legal-note"><strong>「有／無」は現在の設置状況ではなく、売買対象として買主様へ引き渡す設備の有無をご確認ください。</strong></div>
+        <label class="confirm-check"><input type="checkbox" id="equipmentMeaningExplained"><span>「有／無」の意味を売主へ説明済み<br><small>業務確認用であり、法的判断を自動で行うものではありません。</small></span></label>
+        <div id="equipmentItems" style="margin-top:14px"></div>
+      </div>
+    </section>
+
+    <section id="screen-pending" class="screen" aria-labelledby="pending-title">
+      <h1 id="pending-title">未確認・追加確認一覧</h1>
+      <p class="lead">未実施と、現地確認後の追加確認を分けて表示</p>
+      <div class="card">
+        <div id="pendingList"></div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">入力サマリー</h2>
+        <div id="inputSummary"></div>
+      </div>
+    </section>
+
+    <section id="screen-json" class="screen" aria-labelledby="json-title">
+      <h1 id="json-title">JSON出力／読込</h1>
+      <p class="lead">スマホとPCの間でファイルを手動共有</p>
+      <div class="card">
+        <h2 class="card-title">JSON出力</h2>
+        <p class="lead">現在の入力内容を端末に保存します。</p>
+        <button type="button" class="btn gold" id="exportButton">JSONファイルを出力</button>
+      </div>
+      <div class="card">
+        <h2 class="card-title">JSON読込</h2>
+        <p class="lead">このアプリから出力したJSONファイルを選択します。現在の入力内容は読込データで置き換わります。</p>
+        <label class="file-label">JSONファイルを選択<input type="file" id="importFile" accept="application/json,.json"></label>
+        <div id="importResult" class="notice" style="display:none;margin-top:12px" role="status"></div>
+      </div>
+      <div class="notice warning">JSONファイルには案件情報と現地調査メモが含まれます。共有先と保管場所にご注意ください。</div>
+    </section>
+  </main>
+
+  <div class="save-bar"><button type="button" class="btn" id="saveButton">入力内容を保存</button></div>
+  <nav class="bottom-nav" aria-label="画面メニュー">
+    <button class="nav-btn active" data-screen="top"><span class="nav-icon">⌂</span>TOP</button>
+    <button class="nav-btn" data-screen="header"><span class="nav-icon">▤</span>案件</button>
+    <button class="nav-btn" data-screen="survey"><span class="nav-icon">✓</span>初期確認</button>
+    <button class="nav-btn" data-screen="pending"><span class="nav-icon">!</span>未確認</button>
+    <button class="nav-btn" data-screen="json"><span class="nav-icon">⇄</span>JSON</button>
+  </nav>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "realEstateSaleCaseHub_mvp1_v0.1";
+      const STATUS_OPTIONS = ["未確認", "追加確認あり", "確認済", "該当なし"];
+      const ADDITIONAL_TARGETS = ["売主", "役所", "供給事業者", "書類", "専門業者", "その他"];
+      const RESPONSE_STATUSES = ["未対応", "確認中", "回答待ち", "完了"];
+      const SOURCE_OPTIONS = ["現地確認", "売主回答", "書類確認"];
+      const ROAD_TYPE_OPTIONS = [
+        { code: "ア", description: "建築基準法第42条第1項第1号の道路" },
+        { code: "イ", description: "建築基準法第42条第1項第2号の道路" },
+        { code: "ウ", description: "建築基準法第42条第1項第3号の道路" },
+        { code: "エ", description: "建築基準法第42条第1項第4号の道路" },
+        { code: "オ", description: "建築基準法第42条第1項第5号の道路（位置指定道路）" },
+        { code: "カ", description: "建築基準法第42条第2項道路" },
+        { code: "キ", description: "建築基準法第42条の道路に該当しない" },
+        { code: "未確認", description: "道路種類を未確認" }
+      ];
+
+const HEAT_ITEMS = {
+        'kyutoki':     ['電気','ガス','石油','太陽熱'],
+        'konro':       ['電気','ガス'],
+        'guriru':      ['電気','ガス'],
+        'biruto_oven': ['電気','ガス'],
+        'biruto_dish': ['電気','ガス'],
+        'reidanbo':    ['電気','ガス','石油'],
+        'reibo':       ['電気','ガス','石油'],
+        'danbo':       ['電気','ガス','石油'],
+        'yuka_danbo':  ['電気','ガス','石油'],
+        // kubun
+        'kyutoki_k':   ['電気','ガス','石油','太陽熱'],
+        'konro_k':     ['電気','ガス'],
+        'guriru_k':    ['電気','ガス'],
+        'oven_k':      ['電気','ガス'],
+        'dish_k':      ['電気','ガス'],
+        'reidanbo_k':  ['電気','ガス','石油'],
+        'reibouki_k':  ['電気','ガス','石油'],
+        'danbouki_k':  ['電気','ガス','石油'],
+        'yukadan_k':   ['電気','ガス','石油'],
+      };
+      
+      // ===== FEATURE OPTIONS (付帯機能) =====
+      const FEATURE_ITEMS = {
+        // 浴槽
+        'yusou':      {label:'付帯機能', opts:['追炊き','足し湯','保温','湯張り']},
+        'yusou_k':    {label:'付帯機能', opts:['追炊き','足し湯','保温','湯張り']},
+        // 洗面設備
+        'senmen_1f':  {label:'設備内容', opts:['洗面台','照明','シャワー','コンセント','鏡','曇り止め']},
+        'senmen_2f':  {label:'設備内容', opts:['洗面台','照明','シャワー','コンセント','鏡','曇り止め']},
+        'senmen1_k':  {label:'設備内容', opts:['洗面台','照明','シャワー','コンセント','鏡','曇り止め']},
+        // トイレ
+        'toilet_1f':  {label:'付帯機能', opts:['温水洗浄','保温','乾燥','ロータンク','手洗い']},
+        'toilet_2f':  {label:'付帯機能', opts:['温水洗浄','保温','乾燥','ロータンク','手洗い']},
+        'toilet1_k':  {label:'付帯機能', opts:['温水洗浄','保温','乾燥','ロータンク','手洗い']},
+        // 換気扇
+        'kanki':      {label:'設置箇所', opts:['浴室','洗面所','トイレ']},
+        'kanki_k':    {label:'設置箇所', opts:['浴室','洗面所','トイレ']},
+        // インターホン
+        'interphone': {label:'付帯機能', opts:['モニター有']},
+        'inter_k':    {label:'付帯機能', opts:['モニター有']},
+        // 収納棚
+        'shuno_tana': {label:'種別', opts:['食器棚（造付）','電動昇降戸棚','つり戸棚']},
+        'tana_k':     {label:'種別', opts:['食器棚（造付）','電動昇降戸棚','つり戸棚']},
+        // 収納スペース
+        'shuno_space':{label:'種別', opts:['床下収納','小屋裏収納']},
+        'space_k':    {label:'種別', opts:['床下収納','小屋裏収納']},
+      };
+      
+      // ===== WARNING JUDGE =====
+      const WARNING_VALS = new Set(['有','発見している','過去に雨漏りがあった','現在雨漏り箇所がある','過去に被害があった','現在被害がある','実施している','確認できない']);
+      const CAUTION_VALS = new Set(['不明','協議中']);
+      
+      function valClass(v) {
+        if (!v) return '';
+        if (WARNING_VALS.has(v)) return 'sel-warning';
+        if (CAUTION_VALS.has(v)) return 'sel-caution';
+        return 'sel-normal';
+      }
+      function badgeClass(v) {
+        if (!v) return 'badge-nashi';
+        if (v === '無' || v === '発見していない' || v === '現在まで発見していない' || v === '実施していない') return 'badge-nashi';
+        if (WARNING_VALS.has(v)) return 'badge-warning';
+        if (CAUTION_VALS.has(v)) return 'badge-caution';
+        return 'badge-ari';
+      }
+      
+      // ===== DATA =====
+      const DATA = {
+        kodate:{
+          futai:{sections:[
+            {id:'kyuto',title:'給湯関係',icon:'🚿',items:[
+              {id:'kyutoki',label:'給湯器',sub:'熱源を選択できます'},
+              {id:'yuwakashi',label:'屋内式ガス湯沸かし器（個別）'},
+            ]},
+            {id:'kitchen',title:'キッチン設備',icon:'🍳',items:[
+              {id:'nagashidai',label:'流し台'},
+              {id:'konro',label:'コンロ',sub:'熱源を選択できます'},
+              {id:'renjifudo',label:'レンジフード（換気扇）'},
+              {id:'guriru',label:'グリル',sub:'熱源を選択できます'},
+              {id:'biruto_oven',label:'ビルトインオーブンレンジ',sub:'熱源を選択できます'},
+              {id:'biruto_dish',label:'ビルトイン食器洗浄乾燥機',sub:'熱源を選択できます'},
+              {id:'josuiki',label:'浄水器'},
+              {id:'disposer',label:'ディスポーザー'},
+            ]},
+            {id:'bath',title:'浴室設備',icon:'🛁',items:[
+              {id:'shower',label:'シャワー'},
+              {id:'bath_suisen',label:'混合水栓（浴室）'},
+              {id:'yusou',label:'浴槽',sub:'追炊き・足し湯・保温・湯張り'},
+              {id:'bath_mensai',label:'浴室洗面台'},
+              {id:'balance_kama',label:'屋内式風呂がま（バランス釜）'},
+              {id:'yokushitsu_kanso',label:'浴室内乾燥機'},
+            ]},
+            {id:'senmen',title:'洗面設備',icon:'🪥',items:[
+              {id:'senmen_1f',label:'洗面設備 1階',sub:'洗面台・照明・シャワー・コンセント・鏡'},
+              {id:'senmen_2f',label:'洗面設備 2階',sub:'洗面台・照明・シャワー・コンセント・鏡'},
+            ]},
+            {id:'toilet',title:'トイレ設備',icon:'🚽',items:[
+              {id:'toilet_1f',label:'トイレ 1階',sub:'便器・温水洗浄・保温・乾燥・ロータンク'},
+              {id:'toilet_2f',label:'トイレ 2階',sub:'便器・温水洗浄・保温・乾燥・ロータンク'},
+            ]},
+            {id:'sentaku',title:'洗濯設備',icon:'🧺',items:[
+              {id:'bousui_pan',label:'防水パン'},
+              {id:'sentaku_suisen',label:'洗濯用水栓'},
+            ]},
+            {id:'aircon',title:'空調関係',icon:'❄️',items:[
+              {id:'reidanbo',label:'冷暖房機',sub:'熱源を選択できます'},
+              {id:'reibo',label:'冷房機',sub:'熱源を選択できます'},
+              {id:'danbo',label:'暖房機',sub:'熱源を選択できます'},
+              {id:'yuka_danbo',label:'床暖房設備',sub:'熱源を選択できます'},
+              {id:'kanki',label:'換気扇',sub:'浴室・洗面所・トイレ'},
+              {id:'kanki_24',label:'24時間換気システム'},
+            ]},
+            {id:'other_main',title:'その他（主要設備）',icon:'🔔',items:[
+              {id:'interphone',label:'インターホン',sub:'モニター有無'},
+            ]},
+            {id:'shoumei',title:'照明関係',icon:'💡',items:[
+              {id:'indoor_light',label:'屋内照明器具'},
+              {id:'outdoor_light',label:'屋外照明器具'},
+            ]},
+            {id:'shuno',title:'収納関係',icon:'📦',items:[
+              {id:'shuno_tana',label:'収納棚',sub:'食器棚（造付）・電動昇降戸棚・つり戸棚'},
+              {id:'shuno_space',label:'収納スペース',sub:'床下収納・小屋裏収納'},
+              {id:'getabako',label:'下駄箱'},
+            ]},
+            {id:'tategu',title:'建具関係',icon:'🪟',items:[
+              {id:'amido',label:'網戸'},
+              {id:'amado',label:'雨戸'},
+              {id:'tatami_fusuma',label:'畳・ふすま'},
+              {id:'to_tobira',label:'戸・扉'},
+              {id:'shoji',label:'障子'},
+            ]},
+            {id:'tv',title:'テレビ視聴',icon:'📺',items:[
+              {id:'tv_antenna',label:'地上波用TVアンテナ'},
+              {id:'sat_antenna',label:'衛星アンテナ'},
+            ]},
+            {id:'other_equip',title:'その他設備',icon:'🏡',items:[
+              {id:'carpet',label:'カーペット（敷込）'},
+              {id:'curtain',label:'カーテン'},
+              {id:'curtain_rail',label:'カーテンレール'},
+              {id:'monoki',label:'物置'},
+              {id:'monohoshi',label:'物干し'},
+              {id:'outdoor_sink',label:'スロップシンク（屋外）'},
+              {id:'outdoor_suisen',label:'屋外水栓'},
+              {id:'niwaki',label:'庭木・庭石'},
+              {id:'mon_hei',label:'門・塀'},
+              {id:'garage',label:'車庫・カーポート'},
+              {id:'internet',label:'インターネット回線'},
+              {id:'kaijiki',label:'住宅用火災警報器'},
+              {id:'solar',label:'太陽光発電システム'},
+            ]},
+          ]},
+          kokuchi:{sections:[
+            {id:'building',title:'建物の状況',icon:'🏠',items:[
+              {id:'amamori',label:'①雨漏り',type:'kokuchi',
+                opts:['現在まで発見していない','過去に雨漏りがあった','現在雨漏り箇所がある'],
+                details:{
+                  '過去に雨漏りがあった':[{key:'kasho',label:'箇所',ph:'例：2階天井、外壁サッシ周り'},{key:'koji_status',label:'修理工事',type:'select',choices:['未','済']},{key:'koji_ym',label:'工事時期（年月頃）',ph:'例：2018年6月頃'}],
+                  '現在雨漏り箇所がある':[{key:'kasho',label:'箇所',ph:'例：1階和室天井'}],
+                }},
+              {id:'shiroari',label:'②白蟻被害',type:'kokuchi',
+                opts:['現在まで発見していない','白蟻予防工事あり','過去に被害があった','現在被害がある'],
+                details:{
+                  '白蟻予防工事あり':[{key:'yobou_status',label:'工事',type:'select',choices:['済','未']},{key:'yobou_ym',label:'時期（年月頃）',ph:'例：2020年4月頃'}],
+                  '過去に被害があった':[{key:'kasho',label:'箇所',ph:'例：床下、浴室周り'},{key:'kujyo_status',label:'駆除と修理工事',type:'select',choices:['済','未']},{key:'kujyo_ym',label:'時期（年頃）',ph:'例：2015年頃'}],
+                  '現在被害がある':[{key:'kasho',label:'箇所',ph:'例：床下、柱'}],
+                }},
+              {id:'fugu',label:'③建物の不具合（傾き・腐食等）',type:'kokuchi',
+                opts:['発見していない','発見している'],
+                details:{
+                  '発見している':[{key:'kasho_jokyo',label:'箇所・状況',ph:'例：1階床の傾き、浴室木部腐食',multiline:true}],
+                }},
+              {id:'haisu',label:'④給排水施設の故障・漏水',type:'kokuchi',
+                opts:['発見していない','発見している'],
+                details:{
+                  '発見している':[{key:'kasho_jokyo',label:'箇所・状況',ph:'例：台所配管の水漏れ、排水詰まり',multiline:true}],
+                }},
+              {id:'reform',label:'⑤増改築・修繕・リフォーム履歴',type:'kokuchi',
+                opts:['実施していない','実施している','不明'],
+                details:{
+                  '実施している':[
+                    {key:'jisshi_ym',label:'実施時期（年月頃）',ph:'例：2019年3月頃'},
+                    {key:'kasho_naiyou',label:'箇所・内容',ph:'例：キッチン交換、外壁塗装',multiline:true},
+                    {key:'kensetsu_sha',label:'建設業者',ph:'例：○○建設'},
+                    {key:'kakunin_sho',label:'建築確認済証',type:'select',choices:['有','無']},
+                    {key:'kensa_sho',label:'検査済証',type:'select',choices:['有','無']},
+                    {key:'sekkei_sho',label:'設計図書',type:'select',choices:['有','無']},
+                  ],
+                }},
+              {id:'kaji',label:'⑥火災（ボヤ等含む）の被害',type:'kokuchi',
+                opts:['無','有'],
+                details:{
+                  '有':[
+                    {key:'jiki',label:'時期（年月頃）',ph:'例：2010年7月頃'},
+                    {key:'kasho_jokyo',label:'箇所・状況',ph:'例：台所でボヤ、消火で鎮火',multiline:true},
+                  ],
+                }},
+              {id:'ishiwata',label:'⑦石綿使用調査結果の記録',type:'kokuchi',
+                opts:['無','有'],
+                details:{
+                  '有':[
+                    {key:'chosa_date',label:'調査年月日',ph:'例：2018年5月15日'},
+                    {key:'chosa_kikan',label:'調査の実施機関',ph:'例：○○建築診断事務所'},
+                    {key:'chosa_han_i',label:'調査の範囲',ph:'例：建物全体'},
+                    {key:'bikou',label:'備考',ph:'例：石綿含有なし',multiline:true},
+                  ],
+                }},
+              {id:'chosa',label:'⑧建物状況調査',type:'kokuchi',
+                opts:['無','有'],
+                details:{
+                  '有':[
+                    {key:'hokokusho_type',label:'資料種別',type:'multicheck',choices:['建物状況調査報告書','建物状況調査の結果の概要']},
+                    {key:'sakusei_date',label:'作成年月日',ph:'例：2022年3月1日'},
+                    {key:'chosa_sha',label:'調査実施者',ph:'例：○○一級建築士事務所'},
+                  ],
+                }},
+              {id:'taishin',label:'⑨耐震診断・安全性に関する資料',type:'kokuchi',
+                opts:['無','有'],
+                details:{
+                  '有':[
+                    {key:'shiryo_type',label:'保存している資料',type:'multicheck',choices:['耐震基準適合証明書','既存住宅性能評価書','耐震診断結果報告書','既存住宅売買瑕疵保険の付保証明書','その他']},
+                    {key:'sonota_shiryo',label:'その他資料名',ph:'例：○○診断書'},
+                  ],
+                }},
+              {id:'seino',label:'⑩住宅性能評価',type:'kokuchi',
+                opts:['無','有'],
+                details:{
+                  '有':[
+                    {key:'hyoka_type',label:'評価書の種類',type:'multicheck',choices:['設計住宅性能評価書','建設住宅性能評価書','既存住宅性能評価書']},
+                  ],
+                }},
+              {id:'shinchiku',label:'⑪建物新築時の資料',type:'kokuchi',
+                opts:['資料あり','資料なし'],
+                details:{
+                  '資料あり':[
+                    {key:'kakunin_sho',label:'建築確認済証',type:'select',choices:['有','無']},
+                    {key:'kensa_sho',label:'検査済証',type:'select',choices:['有','無']},
+                    {key:'sekkei_sho',label:'設計図書',type:'select',choices:['有','無']},
+                    {key:'bunjo_sha',label:'分譲業者・宅建業者名',ph:'例：○○不動産'},
+                  ],
+                }},
+            ]},
+            {id:'tochi',title:'土地の状況',icon:'🌐',items:[
+              {id:'sakai',label:'⑫境界について',type:'kokuchi',
+                opts:['確認できた','確認できない'],
+                details:{
+                  '確認できた':[
+                    {key:'torikime_sho',label:'取決め書',type:'select',choices:['無','有']},
+                    {key:'funsou',label:'紛争',type:'select',choices:['無','有']},
+                    {key:'funsou_naiyou',label:'紛争の内容',ph:'例：境界標の位置で隣地と協議中'},
+                  ],
+                  '確認できない':[
+                    {key:'dekinai_kasho',label:'確認できない箇所',ph:'例：北側隣地との境界'},
+                    {key:'torikime_sho',label:'取決め書',type:'select',choices:['無','有']},
+                    {key:'funsou',label:'紛争',type:'select',choices:['無','有']},
+                    {key:'funsou_naiyou',label:'紛争の内容',ph:'例：北側隣地と境界確認の協議中'},
+                  ],
+                }},
+              {id:'ekkyo',label:'⑬越境について',type:'kokuchi',
+                opts:['無','有','不明'],
+                details:{
+                  '有':[
+                    {key:'ekkyo_mono',label:'越境物',type:'multicheck',choices:['塀','フェンス','擁壁','建物','植栽','給水管','排水管','ガス管','その他']},
+                    {key:'torikime_sho',label:'取決め書',type:'select',choices:['無','有']},
+                    {key:'funsou',label:'紛争',type:'select',choices:['無','有']},
+                    {key:'funsou_naiyou',label:'紛争の内容',ph:'例：越境解消の協議中'},
+                    {key:'basho_jokyo',label:'場所・状況',ph:'例：南側フェンスが隣地に10cm越境',multiline:true},
+                  ],
+                  '不明':[
+                    {key:'bikou',label:'状況メモ',ph:'例：確認が必要な箇所あり'},
+                  ],
+                }},
+              {id:'yoheki',label:'⑭擁壁について',type:'kokuchi',
+                opts:['無','有'],
+                details:{
+                  '有':[
+                    {key:'hoko1',label:'方角①',ph:'例：北'},
+                    {key:'shoyu1',label:'所有者①',type:'select',choices:['売主','隣地所有者','共有','不明']},
+                    {key:'hoko2',label:'方角②',ph:'例：西（なければ空欄）'},
+                    {key:'shoyu2',label:'所有者②',type:'select',choices:['売主','隣地所有者','共有','不明','なし']},
+                    {key:'torikime_sho',label:'取決め書',type:'select',choices:['無','有']},
+                    {key:'funsou',label:'紛争',type:'select',choices:['無','有']},
+                    {key:'funsou_naiyou',label:'紛争の内容',ph:'例：維持管理の協議中'},
+                    {key:'kiretsu',label:'亀裂等の有無',type:'select',choices:['発見していない','発見している']},
+                    {key:'kiretsu_jokyo',label:'亀裂の状況',ph:'例：擁壁南面にひび割れあり'},
+                  ],
+                }},
+              {id:'jiban',label:'⑮地盤の沈下・軟弱',type:'kokuchi',
+                opts:['発見していない','発見している'],
+                details:{
+                  '発見している':[{key:'jokyo',label:'状況',ph:'例：建物北東角付近の沈下',multiline:true}],
+                }},
+              {id:'dojo',label:'⑯土壌汚染に関する情報',type:'kokuchi',
+                opts:['無','有','不明'],
+                details:{
+                  '有':[
+                    {key:'riyou_rireki',label:'住宅以外の使用履歴',ph:'例：20年前まで工場として使用'},
+                    {key:'sonota_joho',label:'その他の情報',ph:'例：土壌調査済み、問題なし',multiline:true},
+                  ],
+                  '不明':[
+                    {key:'bikou',label:'状況メモ',ph:'例：過去の使用用途が不明'},
+                  ],
+                }},
+              {id:'chuchuu',label:'⑰地中埋設物',type:'kokuchi',
+                opts:['発見していない','発見している'],
+                details:{
+                  '発見している':[
+                    {key:'mono_type',label:'埋設物の種類',type:'multicheck',choices:['旧建物基礎','建物廃材','浄化槽','井戸','その他']},
+                    {key:'basho_jokyo',label:'場所・状況',ph:'例：庭の北側に旧基礎あり',multiline:true},
+                  ],
+                }},
+            ]},
+            {id:'kankyo',title:'環境・周辺状況',icon:'🌍',items:[
+              {id:'noise',label:'⑱騒音・振動・臭気等',type:'kokuchi',
+                opts:['無','有','不明'],
+                details:{'有':[{key:'jokyo',label:'状況',ph:'例：南側幹線道路の交通騒音',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+              {id:'denpa',label:'⑲電波障害',type:'kokuchi',
+                opts:['無','有','不明'],
+                details:{'有':[{key:'jokyo',label:'状況',ph:'例：テレビ受信障害あり、共同アンテナ対応'}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+              {id:'shinsui',label:'⑳浸水等の被害',type:'kokuchi',
+                opts:['無','有','不明'],
+                details:{'有':[{key:'jokyo',label:'状況',ph:'例：2019年台風で床下浸水',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+              {id:'kenntiku',label:'㉑近隣の建築計画',type:'kokuchi',
+                opts:['無','有','不明'],
+                details:{'有':[{key:'jokyo',label:'状況',ph:'例：北隣に3階建て建築予定',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+              {id:'shuhen',label:'㉒周辺施設（ゴミ処理場・墓地等）',type:'kokuchi',
+                opts:['無','有','不明'],
+                details:{'有':[{key:'naiyou',label:'内容',ph:'例：南東200mにゴミ処理場',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+              {id:'jiken',label:'㉓過去の事件・事故',type:'kokuchi',
+                opts:['無','有','不明'],
+                details:{'有':[{key:'naiyou',label:'内容（詳細は告知ガイドライン参照）',ph:'例：発生時期・場所・死因の別',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+              {id:'rinjin',label:'㉔近隣との申し合わせ事項',type:'kokuchi',
+                opts:['無','有','不明'],
+                details:{'有':[{key:'naiyou',label:'内容',ph:'例：ゴミ集積所当番、自治会費月500円',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+              {id:'sonota',label:'㉕その他引き継ぐ事項',type:'kokuchi',
+                opts:['無','有'],
+                details:{'有':[{key:'naiyou',label:'内容',ph:'例：近隣との申し合わせ等',multiline:true}]}},
+            ]},
+          ]},
+        },
+        kubun:{
+          futai:{sections:[
+            {id:'kyuto_k',title:'給湯関係',icon:'🚿',items:[
+              {id:'kyutoki_k',label:'給湯器',sub:'熱源を選択できます'},
+              {id:'yuwakashi_k',label:'屋内式ガス湯沸かし器（個別）'},
+            ]},
+            {id:'kitchen_k',title:'キッチン設備',icon:'🍳',items:[
+              {id:'nagashi_k',label:'流し台'},
+              {id:'konro_k',label:'コンロ',sub:'熱源を選択できます'},
+              {id:'renji_k',label:'レンジフード（換気扇）'},
+              {id:'guriru_k',label:'グリル',sub:'熱源を選択できます'},
+              {id:'oven_k',label:'ビルトインオーブンレンジ',sub:'熱源を選択できます'},
+              {id:'dish_k',label:'ビルトイン食器洗浄乾燥機',sub:'熱源を選択できます'},
+              {id:'josu_k',label:'浄水器'},
+              {id:'disp_k',label:'ディスポーザー'},
+            ]},
+            {id:'bath_k',title:'浴室設備',icon:'🛁',items:[
+              {id:'shower_k',label:'シャワー'},
+              {id:'bsuisen_k',label:'混合水栓（浴室）'},
+              {id:'yusou_k',label:'浴槽',sub:'追炊き・足し湯・保温・湯張り'},
+              {id:'bmensai_k',label:'浴室洗面台'},
+              {id:'bal_k',label:'屋内式風呂がま（バランス釜）'},
+              {id:'kanso_k',label:'浴室内乾燥機'},
+            ]},
+            {id:'senmen_k',title:'洗面設備',icon:'🪥',items:[
+              {id:'senmen1_k',label:'洗面設備',sub:'洗面台・照明・シャワー・コンセント・鏡'},
+            ]},
+            {id:'toilet_k',title:'トイレ設備',icon:'🚽',items:[
+              {id:'toilet1_k',label:'トイレ',sub:'便器・温水洗浄・保温・乾燥・ロータンク'},
+            ]},
+            {id:'sentaku_k',title:'洗濯設備',icon:'🧺',items:[
+              {id:'pan_k',label:'防水パン'},
+              {id:'ssuisen_k',label:'洗濯用水栓'},
+            ]},
+            {id:'aircon_k',title:'空調関係',icon:'❄️',items:[
+              {id:'reidanbo_k',label:'冷暖房機',sub:'熱源を選択できます'},
+              {id:'reibouki_k',label:'冷房機',sub:'熱源を選択できます'},
+              {id:'danbouki_k',label:'暖房機',sub:'熱源を選択できます'},
+              {id:'yukadan_k',label:'床暖房設備',sub:'熱源を選択できます'},
+              {id:'kanki_k',label:'換気扇',sub:'浴室・洗面所・トイレ'},
+              {id:'kanki24_k',label:'24時間換気システム'},
+            ]},
+            {id:'other_main_k',title:'その他（主要設備）',icon:'🔔',items:[
+              {id:'inter_k',label:'インターホン',sub:'モニター有無 ※共用設備の場合あり'},
+            ]},
+            {id:'shomei_k',title:'照明関係',icon:'💡',items:[
+              {id:'light_k',label:'室内照明器具'},
+            ]},
+            {id:'shuno_k',title:'収納関係',icon:'📦',items:[
+              {id:'tana_k',label:'収納棚',sub:'食器棚（造付）・電動昇降戸棚・つり戸棚'},
+              {id:'space_k',label:'収納スペース'},
+              {id:'geta_k',label:'下駄箱'},
+            ]},
+            {id:'tategu_k',title:'建具関係',icon:'🪟',items:[
+              {id:'amido_k',label:'網戸'},
+              {id:'tatami_k',label:'畳・ふすま'},
+              {id:'to_k',label:'戸・扉'},
+              {id:'shoji_k',label:'障子'},
+            ]},
+            {id:'tv_k',title:'テレビ視聴',icon:'📺',items:[
+              {id:'tvco_k',label:'TV共視聴設備',sub:'※共用設備の場合は管理組合経由'},
+            ]},
+            {id:'other_k',title:'その他設備',icon:'🏠',items:[
+              {id:'carpet_k',label:'カーペット（敷込）'},
+              {id:'curtain_k',label:'カーテン'},
+              {id:'rail_k',label:'カーテンレール'},
+              {id:'hoshi_k',label:'物干し'},
+              {id:'osink_k',label:'スロップシンク（屋外）'},
+              {id:'osuisen_k',label:'屋外水栓'},
+              {id:'net_k',label:'インターネット回線'},
+              {id:'kaiji_k',label:'住宅用火災警報器'},
+            ]},
+          ]},
+          kokuchi:{sections:[
+            {id:'building_k',title:'建物の状況',icon:'🏢',items:[
+              {id:'amamori_k',label:'①雨漏り',opts:['現在まで発見していない','過去に雨漏りがあった','現在雨漏り箇所がある']},
+              {id:'shiroari_k',label:'②白蟻被害',opts:['現在まで発見していない','白蟻予防工事：済','白蟻予防工事：未','過去に被害があった','現在被害がある']},
+              {id:'fugu_k',label:'③建物の不具合（傾き・腐食等）',opts:['発見していない','発見している']},
+              {id:'haisu_k',label:'④給排水施設の故障・漏水',opts:['発見していない','発見している']},
+              {id:'reform_k',label:'⑤改築・修繕・リフォーム履歴',opts:['実施していない','実施している','不明']},
+              {id:'kaji_k',label:'⑥火災（ボヤ等含む）の被害',opts:['無','有']},
+              {id:'ishi_k',label:'⑦石綿使用調査結果の記録',opts:['無','有']},
+              {id:'chosa_k',label:'⑧建物状況調査',opts:['無','有']},
+              {id:'taishin_k',label:'⑨耐震診断・安全性に関する資料',opts:['無','有']},
+              {id:'seino_k',label:'⑩住宅性能評価',opts:['無','有']},
+              {id:'shinciku_k',label:'⑪建物新築時の資料',opts:['建築確認済証：有','建築確認済証：無','検査済証：有','検査済証：無','設計図書：有','設計図書：無'],multi:true},
+              {id:'dojo_k',label:'⑫土壌汚染に関する情報',opts:['無','有','不明']},
+            ]},
+            {id:'kankyo_k',title:'環境・周辺状況',icon:'🌍',items:[
+              {id:'noise_k',label:'⑬騒音・振動・臭気等',opts:['無','有','不明']},
+              {id:'kenntiku_k',label:'⑭近隣の建築計画',opts:['無','有','不明']},
+              {id:'denpa_k',label:'⑮電波障害',opts:['無','有','不明']},
+              {id:'shinsui_k',label:'⑯浸水等の被害',opts:['無','有','不明']},
+              {id:'shuhen_k',label:'⑰周辺施設（ゴミ処理場・墓地等）',opts:['無','有','不明']},
+              {id:'jiken_k',label:'⑱過去の事件・事故等',opts:['無','有','不明']},
+              {id:'rinjin_k',label:'⑲近隣との申し合わせ事項',opts:['無','有','不明']},
+              {id:'sonota_k',label:'⑳その他引き継ぐ事項',opts:['無','有']},
+            ]},
+            {id:'kanri',title:'管理費・修繕積立金等',icon:'🏢',items:[
+              {id:'kanrihi',label:'①管理費・修繕積立金等の変更予定',opts:['無','協議中','有']},
+              {id:'daikibo',label:'②大規模修繕の予定',opts:['無','協議中','有']},
+              {id:'jichi',label:'③自治会費等',opts:['無','有']},
+              {id:'kanri_giron',label:'④管理組合集会における討議事項',opts:['無','有']},
+            ]},
+          ]},
+        },
+      };
+      const MASTER = [
+        { itemId: "road_access", label: "接道状況", requiredLevel: "必須", usedFor: "重説, 販売資料", note: "道路種類は、指定道路図・役所調査等で別途確認してください。現地入力のみで法的な道路種別を確定するものではありません。" },
+        { itemId: "infrastructure", label: "インフラ引込状況", requiredLevel: "必須", usedFor: "重説, 付帯設備表", note: "メーター・桝等の現地確認だけで、埋設管・所有関係・供給状況等を確定しません。" },
+        { itemId: "drainage_facility", label: "給排水設備の現況", requiredLevel: "重要", usedFor: "物件状況報告書, 付帯設備表", note: "目視・通水可能な範囲の記録です。隠蔽配管・原因・設備寿命等を確定しません。" },
+        { itemId: "building_exterior", label: "建物外観・劣化状況", requiredLevel: "必須", usedFor: "物件状況報告書", note: "目視できる範囲の劣化兆候の記録です。原因・安全性・修繕要否等を判定しません。" },
+        { itemId: "view_sunlight", label: "眺望・日照", requiredLevel: "任意", usedFor: "販売資料", note: "眺望・日照は、確認日時、季節、天候、周辺建物・植栽等により変化します。本入力は確認時点の状況記録であり、将来の眺望・日照を保証するものではありません。" }
+      ];
+      const REMOVED_SITE_IDS = ["boundary_marker", "encroachment", "surrounding_environment", "equipment_status"];
+      const PRIORITY = { "必須": 0, "重要": 1, "任意": 2 };
+
+      let state = createInitialState();
+      let toastTimer;
+      let openSurveyItemId = "";
+
+      function localDate() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+
+      function localDateTime() {
+        const d = new Date();
+        const ymd = localDate();
+        const h = String(d.getHours()).padStart(2, "0");
+        const m = String(d.getMinutes()).padStart(2, "0");
+        const s = String(d.getSeconds()).padStart(2, "0");
+        return `${ymd} ${h}:${m}:${s}`;
+      }
+
+      function makeAdditionalCheckId(itemId) {
+        return `followup_${itemId}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      }
+
+      function deepClone(value) {
+        return JSON.parse(JSON.stringify(value));
+      }
+
+      function createAdditionalCheck() {
+        return {
+          additionalCheckId: "",
+          targets: [],
+          otherTarget: "",
+          detail: "",
+          responseStatus: "未対応",
+          createdAt: "",
+          updatedAt: ""
+        };
+      }
+
+      function createAnswers(itemId) {
+        if (itemId === "road_access") return { roads: [{ roadId: "road_1", direction: "", ownership: "", roadType: "", widthM: "", frontageM: "", note: "" }] };
+        if (itemId === "infrastructure") return {
+          utilities: { drinkingWater: "", gas: "", electricity: "", drainage: "" },
+          gasCurrentProvider: "",
+          electricityCurrentProvider: "",
+          septicCurrentProvider: ""
+        };
+        if (itemId === "drainage_facility") return { main: "", locations: [], methods: [], signs: [] };
+        if (itemId === "building_exterior") return { main: "", parts: [], signs: [], limitations: [] };
+        return { openingDirections: [], sunlight: "", view: "", weather: "", obstructions: [] };
+      }
+
+      function normalizeAnswers(itemId, answers) {
+        const fresh = createAnswers(itemId);
+        if (!answers || typeof answers !== "object") return fresh;
+        if (itemId === "infrastructure") {
+          const current = answers.utilities || {};
+          const valid = {
+            drinkingWater: ["水道（公営）","水道（私営）","井戸","無","未確認"],
+            gas: ["都市ガス","プロパン（個別）","プロパン（集中）","無","未確認"],
+            electricity: ["有","無","未確認"],
+            drainage: ["公共下水","個別浄化槽","集中浄化槽","汲取式","無","未確認"]
+          };
+          Object.keys(valid).forEach(key => {
+            if (valid[key].includes(current[key])) fresh.utilities[key] = current[key];
+          });
+          if (!fresh.utilities.gas && valid.gas.includes(answers.gasType)) fresh.utilities.gas = answers.gasType;
+          if (!fresh.utilities.drainage && valid.drainage.includes(answers.drainageType)) fresh.utilities.drainage = answers.drainageType;
+          fresh.gasCurrentProvider = typeof answers.gasCurrentProvider === "string" ? answers.gasCurrentProvider : "";
+          fresh.electricityCurrentProvider = typeof answers.electricityCurrentProvider === "string" ? answers.electricityCurrentProvider : "";
+          fresh.septicCurrentProvider = typeof answers.septicCurrentProvider === "string" ? answers.septicCurrentProvider : "";
+          return fresh;
+        }
+        if (itemId === "view_sunlight") {
+          return {
+            ...fresh,
+            openingDirections: Array.isArray(answers.openingDirections) ? answers.openingDirections : Array.isArray(answers.directions) ? answers.directions : [],
+            sunlight: answers.sunlight || "",
+            view: answers.view || "",
+            weather: answers.weather || "",
+            obstructions: Array.isArray(answers.obstructions) ? answers.obstructions : []
+          };
+        }
+        return { ...fresh, ...deepClone(answers) };
+      }
+
+      function createSurveyItem(master) {
+        return {
+          itemId: master.itemId,
+          label: master.label,
+          requiredLevel: master.requiredLevel,
+          status: "未確認",
+          checkedDate: "",
+          checkedTime: "",
+          checkedBy: "",
+          answers: createAnswers(master.itemId),
+          inputMaster: master.itemId === "road_access" ? { roadTypeOptions: deepClone(ROAD_TYPE_OPTIONS) } : {},
+          additionalCheck: createAdditionalCheck(),
+          memo: "",
+          photoMemo: "",
+          usedFor: master.usedFor,
+          note: master.note
+        };
+      }
+
+      function createEquipmentChecklist() {
+        return {
+          title: "付帯設備表",
+          answerDefinition: "売買対象として買主様へ引き渡す設備の有無",
+          meaningExplained: false,
+          sections: DATA.kodate.futai.sections.map(section => ({
+            sectionId: section.id,
+            label: section.title,
+            icon: section.icon,
+            items: section.items.map(item => ({
+              itemId: item.id,
+              label: item.label,
+              sub: item.sub || "",
+              questionType: "yes_no",
+              options: ["有", "無"],
+              heatSourceLabel: HEAT_ITEMS[item.id] ? "熱源" : "",
+              heatSourceOptions: deepClone(HEAT_ITEMS[item.id] || []),
+              featureLabel: FEATURE_ITEMS[item.id]?.label || "",
+              featureOptions: deepClone(FEATURE_ITEMS[item.id]?.opts || []),
+              answer: "",
+              heatSources: [],
+              features: [],
+              note: ""
+            }))
+          }))
+        };
+      }
+
+      function createSellerDisclosure() {
+        return {
+          title: "物件状況確認書／告知書",
+          respondent: "",
+          enteredBy: "",
+          answeredDate: "",
+          sections: DATA.kodate.kokuchi.sections.map(section => ({
+            sectionId: section.id,
+            label: section.title,
+            icon: section.icon,
+            items: section.items.map(item => ({
+              itemId: item.id,
+              label: item.label,
+              questionType: item.multi ? "multiple" : "conditional_single",
+              options: deepClone(item.opts || []),
+              detailDefinitions: deepClone(item.details || {}),
+              answer: item.multi ? [] : "",
+              sourceOptions: deepClone(SOURCE_OPTIONS),
+              sources: [],
+              detailAnswers: {},
+              detailSources: {},
+              note: ""
+            }))
+          }))
+        };
+      }
+
+      function createInitialState() {
+        return {
+          schemaVersion: "1.2",
+          header: {
+            caseId: "", customerId: "", propertyId: "", caseType: "売却",
+            staff: "", status: "", createdAt: localDate(), updatedAt: ""
+          },
+          siteSurvey: MASTER.map(createSurveyItem),
+          equipmentChecklist: createEquipmentChecklist(),
+          sellerDisclosure: createSellerDisclosure(),
+          migrationArchive: { removedSiteSurveyItems: [] }
+        };
+      }
+
+      function normalizeImported(raw) {
+        if (!raw || typeof raw !== "object" || !raw.header || !Array.isArray(raw.siteSurvey)) {
+          throw new Error("基本スキーマ（header / siteSurvey）を確認できません。");
+        }
+        const header = raw.header;
+        const requiredHeaderKeys = ["caseId","customerId","propertyId","caseType","staff","status","createdAt","updatedAt"];
+        if (requiredHeaderKeys.some(key => typeof header[key] !== "string")) {
+          throw new Error("ヘッダー項目が不足しているか、文字列ではありません。");
+        }
+        if (header.caseType !== "売却") {
+          throw new Error("案件種別が「売却」ではありません。");
+        }
+        const importedById = new Map(raw.siteSurvey.map(item => [item && item.itemId, item]));
+        const siteSurvey = MASTER.map(master => {
+          const item = importedById.get(master.itemId);
+          const freshItem = createSurveyItem(master);
+          if (!item) return freshItem;
+          const migratedStatus = item.status === "要再確認" ? "追加確認あり" : item.status;
+          const status = STATUS_OPTIONS.includes(migratedStatus) ? migratedStatus : "未確認";
+          const additionalCheck = { ...createAdditionalCheck(), ...(item.additionalCheck || {}) };
+          if (status === "追加確認あり" && !additionalCheck.additionalCheckId) {
+            additionalCheck.additionalCheckId = makeAdditionalCheckId(master.itemId);
+            additionalCheck.createdAt = localDateTime();
+            additionalCheck.updatedAt = additionalCheck.createdAt;
+          }
+          return {
+            ...freshItem,
+            status,
+            checkedDate: typeof item.checkedDate === "string" ? item.checkedDate : "",
+            checkedTime: typeof item.checkedTime === "string" ? item.checkedTime : "",
+            checkedBy: typeof item.checkedBy === "string" ? item.checkedBy : "",
+            answers: normalizeAnswers(master.itemId, item.answers),
+            additionalCheck,
+            memo: typeof item.memo === "string" ? item.memo : "",
+            photoMemo: typeof item.photoMemo === "string" ? item.photoMemo : ""
+          };
+        });
+        const fresh = createInitialState();
+        const equipmentChecklist = raw.equipmentChecklist && Array.isArray(raw.equipmentChecklist.sections)
+          ? raw.equipmentChecklist : fresh.equipmentChecklist;
+        const sellerDisclosure = raw.sellerDisclosure && Array.isArray(raw.sellerDisclosure.sections)
+          ? raw.sellerDisclosure : fresh.sellerDisclosure;
+        sellerDisclosure.sections.forEach(section => section.items.forEach(item => {
+          if (!Array.isArray(item.sourceOptions)) item.sourceOptions = deepClone(SOURCE_OPTIONS);
+          if (!Array.isArray(item.sources)) item.sources = [];
+          if (!item.detailSources || typeof item.detailSources !== "object") item.detailSources = {};
+        }));
+        const existingArchive = raw.migrationArchive?.removedSiteSurveyItems || [];
+        const removed = raw.siteSurvey.filter(item => REMOVED_SITE_IDS.includes(item?.itemId));
+        const archiveById = new Map([...existingArchive, ...removed].map(item => [item.itemId, deepClone(item)]));
+        return {
+          schemaVersion: "1.2",
+          header: { ...header },
+          siteSurvey,
+          equipmentChecklist,
+          sellerDisclosure,
+          migrationArchive: { removedSiteSurveyItems: [...archiveById.values()] }
+        };
+      }
+
+      function load() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) return;
+        try {
+          state = normalizeImported(JSON.parse(stored));
+        } catch (error) {
+          console.warn("保存データを読み込めませんでした:", error.message);
+          showToast("保存データを読み込めませんでした");
+        }
+      }
+
+      function save(showMessage = true) {
+        readHeaderForm();
+        state.header.updatedAt = localDateTime();
+        document.getElementById("updatedAt").value = state.header.updatedAt;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        updateAllViews();
+        if (showMessage) showToast("入力内容を保存しました");
+      }
+
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+
+      function readHeaderForm() {
+        document.querySelectorAll("[data-header]").forEach(input => {
+          state.header[input.dataset.header] = input.value;
+        });
+        state.header.caseType = "売却";
+      }
+
+      function renderHeaderForm() {
+        Object.entries(state.header).forEach(([key, value]) => {
+          const input = document.querySelector(`[data-header="${key}"]`);
+          if (input) input.value = value;
+        });
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, char => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+        })[char]);
+      }
+
+      function statusClass(status) {
+        return ({ "未確認": "unchecked", "追加確認あり": "recheck", "確認済": "done", "該当なし": "na" })[status] || "";
+      }
+
+      function levelClass(level) {
+        return ({ "必須": "required", "重要": "important", "任意": "optional" })[level] || "";
+      }
+
+      function relatedFor(itemId) {
+        return {
+          building_exterior: "関連：売主確認 ①雨漏り・③建物の不具合・④給排水施設",
+          drainage_facility: "関連：売主確認 ④給排水施設の故障・漏水",
+          infrastructure: "関連：付帯設備表の熱源等（回答は自動同期しません）"
+        }[itemId] || "";
+      }
+
+      function renderSurvey() {
+        const wrap = document.getElementById("surveyItems");
+        wrap.innerHTML = state.siteSurvey.map((item, index) => `
+          <article class="card item-card${openSurveyItemId === item.itemId ? " open" : ""}" data-item-id="${item.itemId}">
+            <button type="button" class="item-summary" aria-expanded="${openSurveyItemId === item.itemId}">
+              <span class="item-number">${index + 1}</span>
+              <span class="item-heading">
+                <span class="item-label">${escapeHtml(item.label)}</span>
+                <span class="item-meta">
+                  <span class="badge ${levelClass(item.requiredLevel)}">${item.requiredLevel}</span>
+                  <span class="badge survey-status-badge ${statusClass(item.status)}">${item.status}</span>
+                </span>
+              </span>
+              <span class="chevron">⌄</span>
+            </button>
+            <div class="item-body">
+              <div class="field"><span class="field-name">確認状態</span><div class="tap-options">
+                ${STATUS_OPTIONS.map(option => `<button type="button" class="tap-option${item.status === option ? " selected" : ""}" data-survey-status="${option}">${option}</button>`).join("")}
+              </div></div>
+              <div class="form-grid">
+                <label class="field"><span class="field-name">確認日</span><input type="date" data-field="checkedDate" value="${escapeHtml(item.checkedDate)}"></label>
+                <label class="field"><span class="field-name">確認時刻</span><input type="time" data-field="checkedTime" value="${escapeHtml(item.checkedTime)}"></label>
+                <label class="field"><span class="field-name">確認者</span><input data-field="checkedBy" value="${escapeHtml(item.checkedBy)}"></label>
+              </div>
+              ${renderSurveyAnswers(item)}
+              ${item.status === "追加確認あり" ? renderAdditionalCheck(item) : ""}
+              <label class="field"><span class="field-name">メモ</span><textarea data-field="memo">${escapeHtml(item.memo)}</textarea></label>
+              <label class="field"><span class="field-name">写真メモ <span class="field-hint">写真アップロードなし</span></span><textarea data-field="photoMemo">${escapeHtml(item.photoMemo)}</textarea></label>
+              <div class="master-box">
+                <div><strong>必須度：</strong>${escapeHtml(item.requiredLevel)}</div>
+                <div><strong>使用先：</strong>${escapeHtml(item.usedFor)}</div>
+                <div><strong>注意点：</strong>${escapeHtml(item.note)}</div>
+              </div>
+              ${relatedFor(item.itemId) ? `<div class="related">${escapeHtml(relatedFor(item.itemId))}<br><small>関連表示のみで、回答・確認状況は自動同期しません。</small></div>` : ""}
+            </div>
+          </article>
+        `).join("");
+
+        wrap.querySelectorAll(".item-summary").forEach(button => {
+          button.addEventListener("click", () => {
+            const card = button.closest(".item-card");
+            card.classList.toggle("open");
+            openSurveyItemId = card.classList.contains("open") ? card.dataset.itemId : "";
+            button.setAttribute("aria-expanded", String(card.classList.contains("open")));
+          });
+        });
+
+        wrap.querySelectorAll("[data-field]").forEach(input => {
+          input.addEventListener("input", () => {
+            const card = input.closest(".item-card");
+            const item = state.siteSurvey.find(entry => entry.itemId === card.dataset.itemId);
+            item[input.dataset.field] = input.value;
+            updateAllViews();
+          });
+        });
+        bindSurveyAnswerEvents();
+      }
+
+      function tapOptions(values, selected, attribute, multiple = false) {
+        const selectedValues = multiple ? selected : [selected];
+        return `<div class="chip-options">${values.map(value => {
+          const attr = attribute.includes("=") ? attribute : `${attribute}="${escapeHtml(value)}"`;
+          return `<button type="button" class="chip-option${selectedValues.includes(value) ? " selected" : ""}" ${attr}>${escapeHtml(value)}</button>`;
+        }).join("")}</div>`;
+      }
+
+      function renderSurveyAnswers(item) {
+        const a = item.answers;
+        if (item.itemId === "road_access") {
+          const directions = ["北","北東","東","南東","南","南西","西","北西"];
+          const ownerships = ["公道","私道","未確認"];
+          const roadTypeOptions = item.inputMaster.roadTypeOptions;
+          const hasUnconfirmedType = a.roads.some(road => road.roadType === "未確認");
+          return `<div class="legal-note">道路種類は、指定道路図・役所調査等で別途確認してください。現地入力のみで法的な道路種別を確定するものではありません。</div>
+            ${a.roads.map((road, i) => `<div class="detail-block" data-road-id="${road.roadId}">
+              <div class="field-name">接道 ${i + 1}${a.roads.length > 1 ? `<button type="button" class="note-toggle" data-remove-road="${road.roadId}">削除</button>` : ""}</div>
+              <label class="field"><span class="field-name">方角</span><select data-road-field="direction"><option value="">選択してください</option>${directions.map(v => `<option${road.direction === v ? " selected" : ""}>${v}</option>`).join("")}</select></label>
+              <label class="field"><span class="field-name">公・私道の別</span><select data-road-field="ownership"><option value="">選択してください</option>${ownerships.map(v => `<option${road.ownership === v ? " selected" : ""}>${v}</option>`).join("")}</select></label>
+              <div class="field"><span class="field-name">道路の種類</span><div class="road-type-options">${roadTypeOptions.map(option => `<button type="button" class="road-type-button${road.roadType === option.code ? " selected" : ""}" data-road-type-code="${option.code}"><span class="road-type-code">${escapeHtml(option.code)}｜</span>${escapeHtml(option.description)}</button>`).join("")}</div></div>
+              <div class="form-grid"><label class="field"><span class="field-name">幅員（m）</span><input type="number" min="0" step="0.01" inputmode="decimal" data-road-field="widthM" value="${escapeHtml(road.widthM)}"></label><label class="field"><span class="field-name">接道長さ（m）</span><input type="number" min="0" step="0.01" inputmode="decimal" data-road-field="frontageM" value="${escapeHtml(road.frontageM)}"></label></div>
+              <label class="field"><span class="field-name">備考（任意）</span><textarea data-road-field="note">${escapeHtml(road.note)}</textarea></label>
+            </div>`).join("")}
+            ${hasUnconfirmedType ? `<div class="notice warning">道路種類が「未確認」です。現地調査の状態は「追加確認あり」が候補です。状態は自動変更されません。${item.status !== "追加確認あり" ? '<br><button type="button" class="btn secondary" style="margin-top:8px" data-suggest-additional>「追加確認あり」を選ぶ</button>' : ""}</div>` : ""}
+            <button type="button" class="btn secondary" data-add-road>接道を追加</button>
+            `;
+        }
+        if (item.itemId === "infrastructure") {
+          const groups = [
+            { key:"drinkingWater", label:"飲用水", options:["水道（公営）","水道（私営）","井戸","無","未確認"] },
+            { key:"gas", label:"ガス", options:["都市ガス","プロパン（個別）","プロパン（集中）","無","未確認"] },
+            { key:"electricity", label:"電気", options:["有","無","未確認"] },
+            { key:"drainage", label:"排水", options:["公共下水","個別浄化槽","集中浄化槽","汲取式","無","未確認"] }
+          ];
+          const hasUnconfirmed = Object.values(a.utilities).includes("未確認");
+          const showSepticProvider = ["個別浄化槽","集中浄化槽"].includes(a.utilities.drainage);
+          return `<div class="detail-block">${groups.map(group => `<div class="detail-field"><div class="detail-label">${group.label}</div>${tapOptions(group.options, a.utilities[group.key], `data-utility-choice="${group.key}"`)}</div>`).join("")}
+            <label class="field"><span class="field-name">現在のガス契約先 <span class="field-hint">任意</span></span><div class="field-hint" style="margin-bottom:6px">現在売主が契約しているガス会社名を記入してください。</div><input data-answer-text="gasCurrentProvider" value="${escapeHtml(a.gasCurrentProvider)}" placeholder="例：○○ガス株式会社"></label>
+            <label class="field"><span class="field-name">現在の電気契約先 <span class="field-hint">任意</span></span><div class="field-hint" style="margin-bottom:6px">現在売主が契約している電力会社・電気契約先を記入してください。</div><input data-answer-text="electricityCurrentProvider" value="${escapeHtml(a.electricityCurrentProvider)}" placeholder="例：○○電力株式会社"></label>
+            ${showSepticProvider ? `<label class="field"><span class="field-name">現在の浄化槽管理・契約先 <span class="field-hint">任意</span></span><div class="field-hint" style="margin-bottom:6px">現在の浄化槽の保守点検・管理等の契約先を記入してください。</div><input data-answer-text="septicCurrentProvider" value="${escapeHtml(a.septicCurrentProvider)}" placeholder="例：○○環境株式会社"></label>` : ""}
+            <div class="notice">契約先・管理先の記録から、契約状況・供給状況・設備所有関係等を自動判断しません。</div>
+          </div>
+            ${hasUnconfirmed ? `<div class="notice warning">「未確認」が選択されています。現地調査の状態は「追加確認あり」が候補です。状態は自動変更されません。${item.status !== "追加確認あり" ? '<br><button type="button" class="btn secondary" style="margin-top:8px" data-suggest-additional>「追加確認あり」を選ぶ</button>' : ""}</div>` : ""}`;
+        }
+        if (item.itemId === "drainage_facility") {
+          return `<div class="detail-block"><div class="detail-label">主回答</div>${tapOptions(["目視可能範囲で異常兆候なし","異常兆候あり","一部のみ確認","通水確認できず","未確認","該当なし"], a.main, 'data-answer-single="main"')}
+            <div class="detail-label" style="margin-top:10px">確認箇所</div>${tapOptions(["キッチン","浴室","洗面","トイレ","洗濯水栓・防水パン","屋外水栓","給湯設備周辺","排水桝","床下・点検口から見える範囲","その他"], a.locations, 'data-answer-multi="locations"', true)}
+            <div class="detail-label" style="margin-top:10px">確認した兆候</div>${tapOptions(["漏水・水滴","水染み","排水の流れが遅い","詰まり","異音","異臭","錆・腐食","配管の劣化","器具のぐらつき","その他","明確な兆候なし"], a.signs, 'data-answer-multi="signs"', true)}
+          </div>`;
+        }
+        if (item.itemId === "building_exterior") {
+          return `<div class="detail-block"><div class="detail-label">主回答</div>${tapOptions(["目視可能範囲で目立つ劣化兆候なし","劣化兆候あり","一部のみ確認","確認困難","未確認","該当なし"], a.main, 'data-answer-single="main"')}
+            <div class="detail-label" style="margin-top:10px">確認部位</div>${tapOptions(["外壁","基礎","屋根","軒裏","雨樋","バルコニー","開口部・サッシ周辺","玄関・外部建具","外階段","擁壁・外構","その他"], a.parts, 'data-answer-multi="parts"', true)}
+            <div class="detail-label" style="margin-top:10px">確認した兆候</div>${tapOptions(["ひび割れ","欠損","剥がれ","浮き","錆","腐食","変色","水染み","雨漏り跡と思われる痕跡","苔・藻","傾き・変形","シーリング劣化","雨樋の破損・詰まり","その他","目立つ兆候なし"], a.signs, 'data-answer-multi="signs"', true)}
+            <div class="detail-label" style="margin-top:10px">確認できなかった理由（任意）</div>${tapOptions(["高所","植栽・障害物","隣地との間隔","足場・安全上の理由","天候","立入不可","その他"], a.limitations, 'data-answer-multi="limitations"', true)}
+          </div>`;
+        }
+        return `<div class="legal-note">眺望・日照は、確認日時、季節、天候、周辺建物・植栽等により変化します。本入力は確認時点の状況記録であり、将来の眺望・日照を保証するものではありません。</div>
+          <div class="detail-block"><div class="detail-label">開口部の方角（複数選択・入力推奨）</div>${tapOptions(["北","北東","東","南東","南","南西","西","北西"], a.openingDirections, 'data-answer-multi="openingDirections"', true)}
+          <div class="detail-label" style="margin-top:10px">日照（必須）</div>${tapOptions(["確認時に日照あり","確認時に一部日照あり","確認時に日照なし","天候等により確認困難","未確認","該当なし"], a.sunlight, 'data-answer-single="sunlight"')}
+          <div class="detail-label" style="margin-top:10px">眺望（必須）</div>${tapOptions(["開けている","一部遮られている","大きく遮られている","確認困難","未確認","該当なし"], a.view, 'data-answer-single="view"')}
+          <label class="field" style="margin-top:10px"><span class="field-name">天候（選択推奨）</span><select data-answer-single="weather"><option value="">選択してください</option>${["晴れ","曇り","雨","雪","その他"].map(v => `<option${a.weather === v ? " selected" : ""}>${v}</option>`).join("")}</select></label>
+          <div class="detail-label">遮蔽物（任意）</div>${tapOptions(["隣接建物","塀・擁壁","樹木","地形","建築中の建物","その他","目立つ遮蔽物なし"], a.obstructions, 'data-answer-multi="obstructions"', true)}
+        </div>`;
+      }
+
+      function renderAdditionalCheck(item) {
+        const add = item.additionalCheck;
+        return `<div class="detail-block">
+          <div class="card-title">追加確認</div>
+          <div class="detail-label">追加確認先（複数可）</div>${tapOptions(ADDITIONAL_TARGETS, add.targets, "data-additional-target", true)}
+          ${add.targets.includes("その他") ? `<label class="field"><span class="field-name">その他の確認先</span><input data-additional-field="otherTarget" value="${escapeHtml(add.otherTarget)}"></label>` : ""}
+          <label class="field"><span class="field-name">追加確認内容</span><textarea data-additional-field="detail">${escapeHtml(add.detail)}</textarea></label>
+          <label class="field"><span class="field-name">対応状況</span><select data-additional-field="responseStatus">${RESPONSE_STATUSES.map(v => `<option${add.responseStatus === v ? " selected" : ""}>${v}</option>`).join("")}</select></label>
+          <div class="notice">追加確認ID：${escapeHtml(add.additionalCheckId)}</div>
+          ${add.responseStatus === "完了" ? `<div class="notice warning" style="margin-top:8px">追加確認が完了しました。現地調査項目の確認状態を見直してください。</div>` : ""}
+        </div>`;
+      }
+
+      function bindSurveyAnswerEvents() {
+        const wrap = document.getElementById("surveyItems");
+        wrap.querySelectorAll("[data-survey-status]").forEach(button => button.addEventListener("click", () => {
+          const item = state.siteSurvey.find(v => v.itemId === button.closest("[data-item-id]").dataset.itemId);
+          item.status = button.dataset.surveyStatus;
+          if (item.status !== "未確認" && !item.checkedDate) item.checkedDate = localDate();
+          if (item.status !== "未確認" && !item.checkedTime) item.checkedTime = new Date().toTimeString().slice(0,5);
+          if (item.status === "追加確認あり" && !item.additionalCheck.additionalCheckId) {
+            item.additionalCheck.additionalCheckId = makeAdditionalCheckId(item.itemId);
+            item.additionalCheck.createdAt = localDateTime();
+            item.additionalCheck.updatedAt = item.additionalCheck.createdAt;
+          }
+          renderSurvey(); updateAllViews();
+        }));
+        wrap.querySelectorAll("[data-answer-single]").forEach(control => {
+          const eventName = control.tagName === "SELECT" ? "change" : "click";
+          control.addEventListener(eventName, () => {
+            const item = state.siteSurvey.find(v => v.itemId === control.closest("[data-item-id]").dataset.itemId);
+            item.answers[control.dataset.answerSingle] = control.tagName === "SELECT" ? control.value : control.textContent;
+            renderSurvey(); updateAllViews();
+          });
+        });
+        wrap.querySelectorAll("[data-answer-text]").forEach(input => input.addEventListener("input", () => {
+          const item = state.siteSurvey.find(v => v.itemId === input.closest("[data-item-id]").dataset.itemId);
+          item.answers[input.dataset.answerText] = input.value;
+          updateAllViews();
+        }));
+        wrap.querySelectorAll("[data-answer-multi]").forEach(button => button.addEventListener("click", () => {
+          const item = state.siteSurvey.find(v => v.itemId === button.closest("[data-item-id]").dataset.itemId);
+          const key = button.dataset.answerMulti, value = button.textContent;
+          item.answers[key] = item.answers[key].includes(value) ? item.answers[key].filter(v => v !== value) : [...item.answers[key], value];
+          renderSurvey(); updateAllViews();
+        }));
+        wrap.querySelectorAll("[data-utility-choice]").forEach(button => button.addEventListener("click", () => {
+          const item = state.siteSurvey.find(v => v.itemId === button.closest("[data-item-id]").dataset.itemId);
+          item.answers.utilities[button.dataset.utilityChoice] = button.textContent;
+          renderSurvey(); updateAllViews();
+        }));
+        wrap.querySelectorAll("[data-utility]").forEach(select => select.addEventListener("change", () => {
+          const item = state.siteSurvey.find(v => v.itemId === select.closest("[data-item-id]").dataset.itemId);
+          item.answers.utilities[select.dataset.utility] = select.value; updateAllViews();
+        }));
+        wrap.querySelectorAll("[data-road-field]").forEach(control => control.addEventListener("input", () => {
+          const item = state.siteSurvey.find(v => v.itemId === control.closest("[data-item-id]").dataset.itemId);
+          const road = item.answers.roads.find(v => v.roadId === control.closest("[data-road-id]").dataset.roadId);
+          road[control.dataset.roadField] = control.value; updateAllViews();
+        }));
+        wrap.querySelectorAll("[data-road-type-code]").forEach(button => button.addEventListener("click", () => {
+          const item = state.siteSurvey.find(v => v.itemId === button.closest("[data-item-id]").dataset.itemId);
+          const road = item.answers.roads.find(v => v.roadId === button.closest("[data-road-id]").dataset.roadId);
+          road.roadType = button.dataset.roadTypeCode;
+          renderSurvey(); updateAllViews();
+        }));
+        wrap.querySelectorAll("[data-suggest-additional]").forEach(button => button.addEventListener("click", () => {
+          const item = state.siteSurvey.find(v => v.itemId === button.closest("[data-item-id]").dataset.itemId);
+          item.status = "追加確認あり";
+          if (!item.checkedDate) item.checkedDate = localDate();
+          if (!item.checkedTime) item.checkedTime = new Date().toTimeString().slice(0,5);
+          if (!item.additionalCheck.additionalCheckId) {
+            item.additionalCheck.additionalCheckId = makeAdditionalCheckId(item.itemId);
+            item.additionalCheck.createdAt = localDateTime();
+            item.additionalCheck.updatedAt = item.additionalCheck.createdAt;
+          }
+          renderSurvey(); updateAllViews();
+        }));
+        wrap.querySelectorAll("[data-add-road]").forEach(button => button.addEventListener("click", () => {
+          const item = state.siteSurvey.find(v => v.itemId === button.closest("[data-item-id]").dataset.itemId);
+          item.answers.roads.push({roadId:`road_${Date.now()}`,direction:"",ownership:"",roadType:"",widthM:"",frontageM:"",note:""}); renderSurvey();
+        }));
+        wrap.querySelectorAll("[data-remove-road]").forEach(button => button.addEventListener("click", () => {
+          const item = state.siteSurvey.find(v => v.itemId === button.closest("[data-item-id]").dataset.itemId);
+          item.answers.roads = item.answers.roads.filter(v => v.roadId !== button.dataset.removeRoad); renderSurvey(); updateAllViews();
+        }));
+        wrap.querySelectorAll("[data-additional-target]").forEach(button => button.addEventListener("click", () => {
+          const item = state.siteSurvey.find(v => v.itemId === button.closest("[data-item-id]").dataset.itemId);
+          const value = button.dataset.additionalTarget, values = item.additionalCheck.targets;
+          item.additionalCheck.targets = values.includes(value) ? values.filter(v => v !== value) : [...values, value];
+          item.additionalCheck.updatedAt = localDateTime(); renderSurvey(); updateAllViews();
+        }));
+        wrap.querySelectorAll("[data-additional-field]").forEach(control => control.addEventListener("input", () => {
+          const item = state.siteSurvey.find(v => v.itemId === control.closest("[data-item-id]").dataset.itemId);
+          item.additionalCheck[control.dataset.additionalField] = control.value;
+          item.additionalCheck.updatedAt = localDateTime(); updateAllViews();
+          if (control.dataset.additionalField === "responseStatus") renderSurvey();
+        }));
+      }
+
+      function answerMarkerClass(value) {
+        if (WARNING_VALS.has(value)) return "marker-warning";
+        if (CAUTION_VALS.has(value)) return "marker-caution";
+        return "";
+      }
+
+      function individualLegalNote(itemId) {
+        const notes = {
+          amamori: "雨漏りの告知要否や責任範囲は、この回答だけでは判定しません。時期・箇所・修理資料等を別途確認してください。",
+          shiroari: "白蟻被害の告知要否や建物状態は、この回答だけでは判定しません。必要に応じて専門調査を行ってください。",
+          sakai: "境界を確認できたという回答は、境界確定や権利関係の確定を意味しません。",
+          ekkyo: "越境の有無に関する回答だけで、越境問題や解消義務の有無を判定しません。",
+          noise: "騒音・振動・臭気等の告知・説明要否は個別確認が必要です。",
+          shuhen: "周辺施設の告知・説明要否は個別確認が必要です。",
+          jiken: "事件・事故等の告知要否は、国のガイドラインや個別事情を別途確認してください。"
+        };
+        return notes[itemId] || "";
+      }
+
+      function renderEquipment() {
+        const wrap = document.getElementById("equipmentItems");
+        wrap.innerHTML = state.equipmentChecklist.sections.map(section => {
+          const done = section.items.filter(equipmentItemComplete).length;
+          return `<section>
+            <div class="section-head"><span>${section.icon || "•"}</span><span>${escapeHtml(section.label)}</span><span class="section-count">${done}/${section.items.length}</span></div>
+            ${section.items.map(item => `
+              <article class="card question-card" data-equipment-id="${escapeHtml(item.itemId)}">
+                <div class="question-label">${escapeHtml(item.label)}</div>
+                ${item.sub ? `<div class="question-sub">${escapeHtml(item.sub)}</div>` : ""}
+                <div class="tap-options">${item.options.map(option => `<button type="button" class="tap-option${item.answer === option ? " selected" : ""}" data-equipment-answer="${escapeHtml(option)}">${escapeHtml(option)}</button>`).join("")}</div>
+                ${item.answer === "有" && item.heatSourceOptions.length ? `<div class="detail-block"><div class="detail-label">${escapeHtml(item.heatSourceLabel)}（複数可）</div><div class="chip-options">${item.heatSourceOptions.map(option => `<button type="button" class="chip-option${item.heatSources.includes(option) ? " selected" : ""}" data-equipment-heat="${escapeHtml(option)}">${escapeHtml(option)}</button>`).join("")}</div></div>` : ""}
+                ${item.answer === "有" && item.featureOptions.length ? `<div class="detail-block"><div class="detail-label">${escapeHtml(item.featureLabel)}（複数可）</div><div class="chip-options">${item.featureOptions.map(option => `<button type="button" class="chip-option${item.features.includes(option) ? " selected" : ""}" data-equipment-feature="${escapeHtml(option)}">${escapeHtml(option)}</button>`).join("")}</div></div>` : ""}
+                <details><summary class="note-toggle">${item.note ? "不具合・備考あり" : "不具合・備考を追記"}</summary><textarea class="question-note open" data-equipment-note placeholder="故障・不具合の内容を入力">${escapeHtml(item.note)}</textarea></details>
+              </article>`).join("")}
+          </section>`;
+        }).join("");
+      }
+
+      function renderDetailField(item, definition) {
+        const value = item.detailAnswers[definition.key];
+        const sources = item.detailSources[definition.key] || [];
+        const optional = isOptionalDetail(definition, item);
+        const optionalText = optional ? "（任意）" : "（未入力一覧対象）";
+        if (definition.type === "select" || definition.type === "multicheck") {
+          const values = Array.isArray(value) ? value : [];
+          return `<div class="detail-field" data-detail-key="${escapeHtml(definition.key)}">
+            <div class="detail-label">${escapeHtml(definition.label)} ${optionalText}</div>
+            <div class="chip-options">${definition.choices.map(choice => {
+              const selected = definition.type === "multicheck" ? values.includes(choice) : value === choice;
+              return `<button type="button" class="chip-option${selected ? " selected" : ""}" data-detail-choice="${escapeHtml(choice)}" data-detail-type="${definition.type}">${escapeHtml(choice)}</button>`;
+            }).join("")}</div>
+            <div class="detail-label" style="margin-top:7px">情報源</div>${tapOptions(SOURCE_OPTIONS, sources, `data-detail-source-key="${escapeHtml(definition.key)}"`, true)}
+          </div>`;
+        }
+        const tag = definition.multiline ? "textarea" : "input";
+        return `<div class="detail-field">
+          <div class="detail-label">${escapeHtml(definition.label)} ${optionalText}</div>
+          <${tag} data-detail-text="${escapeHtml(definition.key)}" placeholder="${escapeHtml(definition.ph || "")}"${definition.multiline ? "" : ` value="${escapeHtml(value || "")}"`}>${definition.multiline ? escapeHtml(value || "") : ""}</${tag}>
+          <div class="detail-label" style="margin-top:7px">情報源</div>${tapOptions(SOURCE_OPTIONS, sources, `data-detail-source-key="${escapeHtml(definition.key)}"`, true)}
+        </div>`;
+      }
+
+      function renderDisclosure() {
+        document.querySelectorAll("[data-disclosure-meta]").forEach(input => {
+          input.value = state.sellerDisclosure[input.dataset.disclosureMeta] || "";
+        });
+        const wrap = document.getElementById("disclosureItems");
+        wrap.innerHTML = state.sellerDisclosure.sections.map(section => {
+          const done = section.items.filter(disclosureItemComplete).length;
+          return `<section>
+            <div class="section-head"><span>${section.icon || "•"}</span><span>${escapeHtml(section.label)}</span><span class="section-count">${done}/${section.items.length}</span></div>
+            ${section.items.map(item => {
+              const definitions = item.answer && item.detailDefinitions[item.answer] ? item.detailDefinitions[item.answer] : [];
+              const legal = individualLegalNote(item.itemId);
+              return `<article class="card question-card" data-disclosure-id="${escapeHtml(item.itemId)}">
+                <div class="question-label">${escapeHtml(item.label)}</div>
+                <div class="tap-options">${item.options.map(option => `<button type="button" class="tap-option ${answerMarkerClass(option)}${item.answer === option ? " selected" : ""}" data-disclosure-answer="${escapeHtml(option)}">${escapeHtml(option)}</button>`).join("")}</div>
+                <div class="detail-label" style="margin-top:9px">主回答の情報源（複数可）</div>${tapOptions(SOURCE_OPTIONS, item.sources, "data-disclosure-source", true)}
+                ${definitions.length ? `<div class="detail-block">${definitions.map(def => renderDetailField(item, def)).join("")}</div>` : ""}
+                ${legal ? `<div class="legal-note" style="margin-top:10px">${escapeHtml(legal)}</div>` : ""}
+                <details><summary class="note-toggle">${item.note ? "備考メモあり" : "備考を追記（任意）"}</summary><textarea class="question-note open" data-disclosure-note placeholder="備考・メモ">${escapeHtml(item.note)}</textarea></details>
+              </article>`;
+            }).join("")}
+          </section>`;
+        }).join("");
+      }
+
+      function findEquipmentItem(id) {
+        for (const section of state.equipmentChecklist.sections) {
+          const item = section.items.find(entry => entry.itemId === id);
+          if (item) return item;
+        }
+      }
+
+      function findDisclosureItem(id) {
+        for (const section of state.sellerDisclosure.sections) {
+          const item = section.items.find(entry => entry.itemId === id);
+          if (item) return item;
+        }
+      }
+
+      function isOptionalDetail(definition, item) {
+        const text = `${definition.label || ""} ${definition.ph || ""}`;
+        if (/なければ空欄|任意/.test(text)) return true;
+        if (definition.key === "sonota_shiryo") {
+          const selected = item.detailAnswers.shiryo_type;
+          return !(Array.isArray(selected) && selected.includes("その他"));
+        }
+        return false;
+      }
+
+      function equipmentItemComplete(item) {
+        if (!item.answer) return false;
+        if (item.answer === "有" && item.heatSourceOptions.length && !item.heatSources.length) return false;
+        if (item.answer === "有" && item.featureOptions.length && !item.features.length) return false;
+        return true;
+      }
+
+      function missingDisclosureDetails(item) {
+        if (!item.answer) return [];
+        const definitions = item.detailDefinitions[item.answer] || [];
+        return definitions.filter(definition => {
+          if (isOptionalDetail(definition, item)) return false;
+          const value = item.detailAnswers[definition.key];
+          return Array.isArray(value) ? value.length === 0 : !String(value || "").trim();
+        });
+      }
+
+      function disclosureItemComplete(item) {
+        if (!item.answer || !item.sources.length || missingDisclosureDetails(item).length) return false;
+        return (item.detailDefinitions[item.answer] || []).filter(def => !isOptionalDetail(def, item)).every(def => (item.detailSources[def.key] || []).length > 0);
+      }
+
+      function renderChecklists() {
+        document.getElementById("equipmentMeaningExplained").checked = Boolean(state.equipmentChecklist.meaningExplained);
+        renderEquipment();
+        renderDisclosure();
+      }
+
+      function pendingItems() {
+        return state.siteSurvey.map((item, index) => ({ ...item, originalIndex: index }))
+          .filter(item => item.status === "未確認" || (item.status === "確認済" && siteRequiredMissing(item).length))
+          .sort((a, b) => PRIORITY[a.requiredLevel] - PRIORITY[b.requiredLevel] || a.originalIndex - b.originalIndex);
+      }
+
+      function siteRequiredMissing(item) {
+        if (item.status === "該当なし") return [];
+        const missing = [];
+        if (!item.checkedDate && item.status !== "未確認") missing.push("確認日");
+        if (!item.checkedTime && item.status !== "未確認") missing.push("確認時刻");
+        if (!item.checkedBy && item.status !== "未確認") missing.push("確認者");
+        const a = item.answers;
+        if (item.itemId === "road_access") {
+          a.roads.forEach((road, i) => ["direction","ownership","roadType","widthM","frontageM"].forEach(key => {
+            if (!road[key]) missing.push(`接道${i + 1} ${ {direction:"方角",ownership:"公・私道",roadType:"道路種類",widthM:"幅員",frontageM:"接道長さ"}[key] }`);
+          }));
+        } else if (item.itemId === "infrastructure") {
+          Object.entries({drinkingWater:"飲用水",gas:"ガス",electricity:"電気",drainage:"排水"}).forEach(([key,label]) => { if (!a.utilities[key]) missing.push(label); });
+        } else if (item.itemId === "drainage_facility") {
+          if (!a.main) missing.push("主回答");
+          if (a.main === "異常兆候あり" && !a.locations.length) missing.push("確認箇所");
+          if (a.main === "異常兆候あり" && !a.signs.length) missing.push("確認した兆候");
+        } else if (item.itemId === "building_exterior") {
+          if (!a.main) missing.push("主回答");
+          if (a.main === "劣化兆候あり" && !a.parts.length) missing.push("確認部位");
+          if (a.main === "劣化兆候あり" && !a.signs.length) missing.push("確認した兆候");
+        } else {
+          if (!a.view) missing.push("眺望");
+          if (!a.sunlight) missing.push("日照");
+        }
+        return missing;
+      }
+
+      function additionalItems() {
+        return state.siteSurvey.filter(item => item.status === "追加確認あり");
+      }
+
+      function disclosurePendingItems() {
+        const items = [];
+        const metaLabels = { respondent: "回答者", enteredBy: "入力者", answeredDate: "回答日" };
+        Object.entries(metaLabels).forEach(([key, label]) => {
+          if (!String(state.sellerDisclosure[key] || "").trim()) items.push({ label, detail: "書類全体の情報が未入力", tab: "disclosure" });
+        });
+        state.sellerDisclosure.sections.forEach(section => section.items.forEach(item => {
+          if (!item.answer) {
+            items.push({ label: item.label, detail: "主回答未選択", tab: "disclosure", itemId: item.itemId });
+          } else {
+            if (!item.sources.length) items.push({ label: item.label, detail: "主回答の情報源未選択", tab: "disclosure", itemId: item.itemId });
+            missingDisclosureDetails(item).forEach(definition => items.push({
+              label: item.label,
+              detail: `詳細未入力：${definition.label}`,
+              tab: "disclosure", itemId: item.itemId
+            }));
+            (item.detailDefinitions[item.answer] || []).filter(def => !isOptionalDetail(def, item) && item.detailAnswers[def.key] && !(item.detailSources[def.key] || []).length).forEach(definition => {
+              items.push({ label: item.label, detail: `詳細回答の情報源未選択：${definition.label}`, tab: "disclosure", itemId: item.itemId });
+            });
+          }
+        }));
+        return items;
+      }
+
+      function equipmentPendingItems() {
+        const items = [];
+        if (!state.equipmentChecklist.meaningExplained) {
+          items.push({ label: "「有／無」の意味を売主へ説明済み", detail: "業務確認未完了", tab: "equipment" });
+        }
+        state.equipmentChecklist.sections.forEach(section => section.items.forEach(item => {
+          if (!item.answer) {
+            items.push({ label: item.label, detail: "主回答未選択", tab: "equipment", itemId: item.itemId });
+          } else if (item.answer === "有" && item.heatSourceOptions.length && !item.heatSources.length) {
+            items.push({ label: item.label, detail: `${item.heatSourceLabel}未選択`, tab: "equipment", itemId: item.itemId });
+          } else if (item.answer === "有" && item.featureOptions.length && !item.features.length) {
+            items.push({ label: item.label, detail: `${item.featureLabel}未選択`, tab: "equipment", itemId: item.itemId });
+          }
+        }));
+        return items;
+      }
+
+      function updateAllViews() {
+        readHeaderForm();
+        const header = state.header;
+        const display = value => value.trim() || "未入力";
+        document.getElementById("contextCaseId").textContent = display(header.caseId);
+        document.getElementById("contextPropertyId").textContent = display(header.propertyId);
+        document.getElementById("topCaseId").textContent = display(header.caseId);
+        document.getElementById("topPropertyId").textContent = display(header.propertyId);
+        document.getElementById("topCaseStatus").textContent = display(header.status);
+
+        const implemented = state.siteSurvey.filter(item => item.status !== "未確認").length;
+        const confirmed = state.siteSurvey.filter(item => item.status === "確認済").length;
+        const notApplicable = state.siteSurvey.filter(item => item.status === "該当なし").length;
+        const unchecked = state.siteSurvey.filter(item => item.status === "未確認").length;
+        const additional = state.siteSurvey.filter(item => item.status === "追加確認あり").length;
+        document.getElementById("progressText").textContent = `現地確認実施 ${implemented}/5`;
+        document.getElementById("progressBar").style.width = `${implemented / 5 * 100}%`;
+        document.getElementById("confirmedCount").textContent = `${confirmed}件`;
+        document.getElementById("additionalCount").textContent = `${additional}件`;
+        document.getElementById("uncheckedCount").textContent = `${unchecked}件`;
+        document.getElementById("naCount").textContent = `${notApplicable}件`;
+
+        const pending = pendingItems();
+        const additionalList = additionalItems();
+        const disclosurePending = disclosurePendingItems();
+        const equipmentPending = equipmentPendingItems();
+        const firstNext = pending.length
+          ? { label: pending[0].label, detail: pending[0].status, badge: pending[0].requiredLevel, badgeClass: levelClass(pending[0].requiredLevel) }
+          : disclosurePending.length
+            ? { label: disclosurePending[0].label, detail: disclosurePending[0].detail, badge: "売主確認", badgeClass: "important" }
+            : equipmentPending.length
+              ? { label: equipmentPending[0].label, detail: equipmentPending[0].detail, badge: "付帯設備", badgeClass: "optional" }
+              : null;
+        document.getElementById("nextItem").innerHTML = firstNext ? `
+          <div class="task-row">
+            <span class="badge ${firstNext.badgeClass}">${firstNext.badge}</span>
+            <div class="task-content">
+              <div class="task-title">${escapeHtml(firstNext.label)}</div>
+              <div class="task-status">${escapeHtml(firstNext.detail)}</div>
+            </div>
+          </div>` : `<div class="empty">確認待ちの項目はありません</div>`;
+
+        const siteHtml = pending.map(item => `
+          <div class="task-row" data-open-site-item="${item.itemId}">
+            <span class="badge ${levelClass(item.requiredLevel)}">${item.requiredLevel}</span>
+            <div class="task-content">
+              <div class="task-title">${escapeHtml(item.label)}</div>
+              <div class="task-status"><span class="badge ${statusClass(item.status)}">${item.status}</span>${item.status === "未確認" ? "　確認作業が未実施" : siteRequiredMissing(item).length ? `　未入力：${escapeHtml(siteRequiredMissing(item).join("、"))}` : ""}</div>
+            </div>
+            <button type="button" class="btn secondary" style="min-height:38px;padding:5px 9px" data-jump-site="${item.itemId}">開く</button>
+          </div>`).join("");
+        const additionalHtml = additionalList.map(item => `<div class="task-row"><span class="badge recheck">${escapeHtml(item.additionalCheck.responseStatus)}</span><div class="task-content"><div class="task-title">${escapeHtml(item.label)}</div><div class="task-status">確認先：${escapeHtml(item.additionalCheck.targets.join("、") || "未選択")}<br>${escapeHtml(item.additionalCheck.detail || "追加確認内容未入力")}</div></div><button type="button" class="btn secondary" style="min-height:38px;padding:5px 9px" data-jump-site="${item.itemId}">開く</button></div>`).join("");
+        const genericRows = list => list.map(item => `<div class="task-row"><span class="badge unchecked">未完了</span><div class="task-content"><div class="task-title">${escapeHtml(item.label)}</div><div class="task-status">${escapeHtml(item.detail)}</div></div>${item.itemId ? `<button type="button" class="btn secondary" style="min-height:38px;padding:5px 9px" data-jump-check="${item.tab}:${item.itemId}">開く</button>` : ""}</div>`).join("");
+        document.getElementById("pendingList").innerHTML = `
+          <h2 class="card-title">未確認（${pending.length + disclosurePending.length + equipmentPending.length}件）</h2>
+          <div class="field-hint">現地調査</div>${siteHtml || '<div class="empty">未確認なし</div>'}
+          <div class="field-hint" style="margin-top:16px">物件状況確認書／告知書</div>${genericRows(disclosurePending) || '<div class="empty">未確認なし</div>'}
+          <div class="field-hint" style="margin-top:16px">付帯設備表</div>${genericRows(equipmentPending) || '<div class="empty">未確認なし</div>'}
+          <h2 class="card-title" style="margin-top:24px">追加確認あり（${additionalList.length}件）</h2>${additionalHtml || '<div class="empty">追加確認なし</div>'}`;
+        document.querySelectorAll("[data-jump-site]").forEach(button => button.addEventListener("click", () => jumpToSiteItem(button.dataset.jumpSite)));
+        document.querySelectorAll("[data-jump-check]").forEach(button => button.addEventListener("click", () => {
+          const [tab, itemId] = button.dataset.jumpCheck.split(":");
+          jumpToChecklistItem(tab, itemId);
+        }));
+
+        const disclosureItems = state.sellerDisclosure.sections.flatMap(section => section.items);
+        const equipmentItems = state.equipmentChecklist.sections.flatMap(section => section.items);
+        const disclosureDone = disclosureItems.filter(disclosureItemComplete).length;
+        const equipmentDone = equipmentItems.filter(equipmentItemComplete).length;
+        document.getElementById("inputSummary").innerHTML = `
+          <div class="summary-block"><strong>現地確認実施</strong>：${implemented}/5（確認済 ${confirmed}・追加確認あり ${additional}・未確認 ${unchecked}・該当なし ${notApplicable}）</div>
+          <div class="summary-block"><strong>物件状況確認書／告知書</strong>：${disclosureDone}/${disclosureItems.length}回答済</div>
+          <div class="summary-block"><strong>付帯設備表</strong>：${equipmentDone}/${equipmentItems.length}回答済</div>
+          <div class="summary-block"><strong>書類情報</strong>：回答者 ${escapeHtml(state.sellerDisclosure.respondent || "未入力")}／入力者 ${escapeHtml(state.sellerDisclosure.enteredBy || "未入力")}／回答日 ${escapeHtml(state.sellerDisclosure.answeredDate || "未入力")}</div>
+          <div class="summary-block"><strong>未確認合計</strong>：${pending.length + disclosurePending.length + equipmentPending.length}件／<strong>追加確認あり</strong>：${additionalList.length}件</div>`;
+      }
+
+      function jumpToSiteItem(itemId) {
+        openSurveyItemId = itemId;
+        switchScreen("survey");
+        document.querySelectorAll("[data-check-tab]").forEach(tab => tab.classList.toggle("active", tab.dataset.checkTab === "site"));
+        document.querySelectorAll(".check-panel").forEach(panel => panel.classList.toggle("active", panel.id === "panel-site"));
+        const card = document.querySelector(`[data-item-id="${itemId}"]`);
+        if (card) {
+          card.classList.add("open");
+          card.querySelector(".item-summary")?.setAttribute("aria-expanded", "true");
+          card.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      function jumpToChecklistItem(tab, itemId) {
+        switchScreen("survey");
+        document.querySelectorAll("[data-check-tab]").forEach(button => button.classList.toggle("active", button.dataset.checkTab === tab));
+        document.querySelectorAll(".check-panel").forEach(panel => panel.classList.toggle("active", panel.id === `panel-${tab}`));
+        const selector = tab === "disclosure" ? `[data-disclosure-id="${itemId}"]` : `[data-equipment-id="${itemId}"]`;
+        document.querySelector(selector)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function switchScreen(name) {
+        document.querySelectorAll(".screen").forEach(screen => screen.classList.toggle("active", screen.id === `screen-${name}`));
+        document.querySelectorAll(".nav-btn").forEach(button => button.classList.toggle("active", button.dataset.screen === name));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        updateAllViews();
+      }
+
+      function exportJson() {
+        save(false);
+        if (!state.header.caseId.trim()) {
+          showToast("案件IDを入力してから出力してください");
+          switchScreen("header");
+          document.getElementById("caseId").focus();
+          return;
+        }
+        const json = JSON.stringify(state, null, 2);
+        const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const safeId = state.header.caseId.replace(/[\\/:*?"<>|]/g, "_");
+        link.href = url;
+        link.download = `売却案件_${safeId}_${localDate().replaceAll("-", "")}.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        showToast("JSONファイルを出力しました");
+      }
+
+      async function importJson(file) {
+        const result = document.getElementById("importResult");
+        try {
+          if (!file) return;
+          if (file.size > 2 * 1024 * 1024) throw new Error("ファイルサイズが大きすぎます（上限2MB）。");
+          const text = await file.text();
+          state = normalizeImported(JSON.parse(text));
+          state.header.updatedAt = localDateTime();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          renderHeaderForm();
+          renderSurvey();
+          renderChecklists();
+          updateAllViews();
+          result.textContent = `読込完了：案件ID ${state.header.caseId || "未入力"}`;
+          result.style.display = "block";
+          result.className = "notice";
+          showToast("JSONデータを読み込みました");
+        } catch (error) {
+          result.textContent = `読込できませんでした：${error.message}`;
+          result.style.display = "block";
+          result.className = "notice warning";
+        } finally {
+          document.getElementById("importFile").value = "";
+        }
+      }
+
+      load();
+      renderHeaderForm();
+      renderSurvey();
+      renderChecklists();
+      updateAllViews();
+
+      document.querySelectorAll(".nav-btn").forEach(button => button.addEventListener("click", () => switchScreen(button.dataset.screen)));
+      document.querySelectorAll("[data-check-tab]").forEach(button => button.addEventListener("click", () => {
+        document.querySelectorAll("[data-check-tab]").forEach(tab => tab.classList.toggle("active", tab === button));
+        document.querySelectorAll(".check-panel").forEach(panel => panel.classList.toggle("active", panel.id === `panel-${button.dataset.checkTab}`));
+      }));
+      document.querySelectorAll("[data-header]").forEach(input => input.addEventListener("input", updateAllViews));
+      document.querySelectorAll("[data-disclosure-meta]").forEach(input => input.addEventListener("input", () => {
+        state.sellerDisclosure[input.dataset.disclosureMeta] = input.value;
+        updateAllViews();
+      }));
+      document.getElementById("equipmentMeaningExplained").addEventListener("change", event => {
+        state.equipmentChecklist.meaningExplained = event.target.checked;
+        updateAllViews();
+      });
+      document.getElementById("equipmentItems").addEventListener("click", event => {
+        const card = event.target.closest("[data-equipment-id]");
+        if (!card) return;
+        const item = findEquipmentItem(card.dataset.equipmentId);
+        if (event.target.dataset.equipmentAnswer) item.answer = event.target.dataset.equipmentAnswer;
+        if (event.target.dataset.equipmentHeat) {
+          const value = event.target.dataset.equipmentHeat;
+          item.heatSources = item.heatSources.includes(value) ? item.heatSources.filter(entry => entry !== value) : [...item.heatSources, value];
+        }
+        if (event.target.dataset.equipmentFeature) {
+          const value = event.target.dataset.equipmentFeature;
+          item.features = item.features.includes(value) ? item.features.filter(entry => entry !== value) : [...item.features, value];
+        }
+        if (event.target.matches("[data-equipment-answer],[data-equipment-heat],[data-equipment-feature]")) {
+          renderEquipment();
+          updateAllViews();
+        }
+      });
+      document.getElementById("equipmentItems").addEventListener("input", event => {
+        if (!event.target.matches("[data-equipment-note]")) return;
+        const card = event.target.closest("[data-equipment-id]");
+        findEquipmentItem(card.dataset.equipmentId).note = event.target.value;
+      });
+      document.getElementById("disclosureItems").addEventListener("click", event => {
+        const card = event.target.closest("[data-disclosure-id]");
+        if (!card) return;
+        const item = findDisclosureItem(card.dataset.disclosureId);
+        if (event.target.dataset.disclosureSource) {
+          const value = event.target.dataset.disclosureSource;
+          item.sources = item.sources.includes(value) ? item.sources.filter(entry => entry !== value) : [...item.sources, value];
+          renderDisclosure(); updateAllViews(); return;
+        }
+        if (event.target.dataset.detailSourceKey) {
+          const key = event.target.dataset.detailSourceKey;
+          const value = event.target.textContent;
+          const values = item.detailSources[key] || [];
+          item.detailSources[key] = values.includes(value) ? values.filter(entry => entry !== value) : [...values, value];
+          renderDisclosure(); updateAllViews(); return;
+        }
+        if (event.target.dataset.disclosureAnswer) {
+          item.answer = event.target.dataset.disclosureAnswer;
+          renderDisclosure();
+          updateAllViews();
+          return;
+        }
+        if (event.target.dataset.detailChoice) {
+          const field = event.target.closest("[data-detail-key]");
+          const key = field.dataset.detailKey;
+          const value = event.target.dataset.detailChoice;
+          if (event.target.dataset.detailType === "multicheck") {
+            const values = Array.isArray(item.detailAnswers[key]) ? item.detailAnswers[key] : [];
+            item.detailAnswers[key] = values.includes(value) ? values.filter(entry => entry !== value) : [...values, value];
+          } else {
+            item.detailAnswers[key] = value;
+          }
+          renderDisclosure();
+          updateAllViews();
+        }
+      });
+      document.getElementById("disclosureItems").addEventListener("input", event => {
+        const card = event.target.closest("[data-disclosure-id]");
+        if (!card) return;
+        const item = findDisclosureItem(card.dataset.disclosureId);
+        if (event.target.dataset.detailText) item.detailAnswers[event.target.dataset.detailText] = event.target.value;
+        if (event.target.matches("[data-disclosure-note]")) item.note = event.target.value;
+        updateAllViews();
+      });
+      document.getElementById("saveButton").addEventListener("click", () => save(true));
+      document.getElementById("exportButton").addEventListener("click", exportJson);
+      document.getElementById("importFile").addEventListener("change", event => importJson(event.target.files[0]));
+      window.addEventListener("pagehide", () => save(false));
+    })();
+  </script>
+</body>
+</html>
