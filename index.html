@@ -1695,7 +1695,7 @@ const HEAT_ITEMS = {
 
       function jumpToSiteItem(itemId) {
         openSurveyItemId = itemId;
-        switchScreen("survey");
+        switchScreen("survey", { skipScrollTop: true });
         document.querySelectorAll("[data-check-tab]").forEach(tab => tab.classList.toggle("active", tab.dataset.checkTab === "site"));
         document.querySelectorAll(".check-panel").forEach(panel => panel.classList.toggle("active", panel.id === "panel-site"));
         const card = document.querySelector(`[data-item-id="${itemId}"]`);
@@ -1707,17 +1707,17 @@ const HEAT_ITEMS = {
       }
 
       function jumpToChecklistItem(tab, itemId) {
-        switchScreen("survey");
+        switchScreen("survey", { skipScrollTop: true });
         document.querySelectorAll("[data-check-tab]").forEach(button => button.classList.toggle("active", button.dataset.checkTab === tab));
         document.querySelectorAll(".check-panel").forEach(panel => panel.classList.toggle("active", panel.id === `panel-${tab}`));
         const selector = tab === "disclosure" ? `[data-disclosure-id="${itemId}"]` : `[data-equipment-id="${itemId}"]`;
         document.querySelector(selector)?.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
-      function switchScreen(name) {
+      function switchScreen(name, options = {}) {
         document.querySelectorAll(".screen").forEach(screen => screen.classList.toggle("active", screen.id === `screen-${name}`));
         document.querySelectorAll(".nav-btn").forEach(button => button.classList.toggle("active", button.dataset.screen === name));
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        if (!options.skipScrollTop) window.scrollTo({ top: 0, behavior: "smooth" });
         updateAllViews();
       }
 
@@ -1777,6 +1777,7 @@ const HEAT_ITEMS = {
 
       document.querySelectorAll(".nav-btn").forEach(button => button.addEventListener("click", () => switchScreen(button.dataset.screen)));
       document.querySelectorAll("[data-check-tab]").forEach(button => button.addEventListener("click", () => {
+        window.scrollTo(0, 0);
         document.querySelectorAll("[data-check-tab]").forEach(tab => tab.classList.toggle("active", tab === button));
         document.querySelectorAll(".check-panel").forEach(panel => panel.classList.toggle("active", panel.id === `panel-${button.dataset.checkTab}`));
       }));
