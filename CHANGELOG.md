@@ -1,5 +1,15 @@
 # CHANGELOG — field-survey-demo
 
+## [Unreleased] - 2026-07-14
+
+- 正本（brain-garden）で修正したGalaxy実機テストのスクロール位置ジャンプ対策を反映。
+  - `renderSurvey()`／`renderEquipment()`／`renderDisclosure()`の全体再描画前後で
+    `window.scrollY`を保持・復元し、`requestAnimationFrame`で再調整も追加。
+  - 下部ナビ5ボタンに`type="button"`を明示。
+  - 業務ロジック・質問文・選択肢・JSON構造（`schemaVersion: "1.2"`）は変更なし。
+  - 正本とのSHA-256一致を確認済み：
+    `ac66dcf3e990074b9f3a6f5e39b23c76f1628f9dc81a8be17627a5b2d3cb03a8`
+
 ## [codex-mvp1-baseline] - 2026-07-14
 
 - 正本 `Mano-003/brain-garden` の `apps/field-survey-hub/index.html`

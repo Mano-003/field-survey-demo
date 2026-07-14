@@ -379,11 +379,11 @@
 
   <div class="save-bar"><button type="button" class="btn" id="saveButton">入力内容を保存</button></div>
   <nav class="bottom-nav" aria-label="画面メニュー">
-    <button class="nav-btn active" data-screen="top"><span class="nav-icon">⌂</span>TOP</button>
-    <button class="nav-btn" data-screen="header"><span class="nav-icon">▤</span>案件</button>
-    <button class="nav-btn" data-screen="survey"><span class="nav-icon">✓</span>初期確認</button>
-    <button class="nav-btn" data-screen="pending"><span class="nav-icon">!</span>未確認</button>
-    <button class="nav-btn" data-screen="json"><span class="nav-icon">⇄</span>JSON</button>
+    <button type="button" class="nav-btn active" data-screen="top"><span class="nav-icon">⌂</span>TOP</button>
+    <button type="button" class="nav-btn" data-screen="header"><span class="nav-icon">▤</span>案件</button>
+    <button type="button" class="nav-btn" data-screen="survey"><span class="nav-icon">✓</span>初期確認</button>
+    <button type="button" class="nav-btn" data-screen="pending"><span class="nav-icon">!</span>未確認</button>
+    <button type="button" class="nav-btn" data-screen="json"><span class="nav-icon">⇄</span>JSON</button>
   </nav>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -1166,6 +1166,7 @@ const HEAT_ITEMS = {
 
       function renderSurvey() {
         const wrap = document.getElementById("surveyItems");
+        const scrollY = window.scrollY;
         wrap.innerHTML = state.siteSurvey.map((item, index) => `
           <article class="card item-card${openSurveyItemId === item.itemId ? " open" : ""}" data-item-id="${item.itemId}">
             <button type="button" class="item-summary" aria-expanded="${openSurveyItemId === item.itemId}">
@@ -1201,6 +1202,8 @@ const HEAT_ITEMS = {
             </div>
           </article>
         `).join("");
+        window.scrollTo(0, scrollY);
+        requestAnimationFrame(() => window.scrollTo(0, scrollY));
 
         wrap.querySelectorAll(".item-summary").forEach(button => {
           button.addEventListener("click", () => {
@@ -1410,6 +1413,7 @@ const HEAT_ITEMS = {
 
       function renderEquipment() {
         const wrap = document.getElementById("equipmentItems");
+        const scrollY = window.scrollY;
         wrap.innerHTML = state.equipmentChecklist.sections.map(section => {
           const done = section.items.filter(equipmentItemComplete).length;
           return `<section>
@@ -1425,6 +1429,8 @@ const HEAT_ITEMS = {
               </article>`).join("")}
           </section>`;
         }).join("");
+        window.scrollTo(0, scrollY);
+        requestAnimationFrame(() => window.scrollTo(0, scrollY));
       }
 
       function renderDetailField(item, definition) {
@@ -1456,6 +1462,7 @@ const HEAT_ITEMS = {
           input.value = state.sellerDisclosure[input.dataset.disclosureMeta] || "";
         });
         const wrap = document.getElementById("disclosureItems");
+        const scrollY = window.scrollY;
         wrap.innerHTML = state.sellerDisclosure.sections.map(section => {
           const done = section.items.filter(disclosureItemComplete).length;
           return `<section>
@@ -1474,6 +1481,8 @@ const HEAT_ITEMS = {
             }).join("")}
           </section>`;
         }).join("");
+        window.scrollTo(0, scrollY);
+        requestAnimationFrame(() => window.scrollTo(0, scrollY));
       }
 
       function findEquipmentItem(id) {
