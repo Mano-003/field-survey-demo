@@ -1,5 +1,15 @@
 # CHANGELOG — field-survey-demo
 
+## [Unreleased] - 2026-07-14 (3)
+
+- 正本（brain-garden）で追加強化したスクロール位置復元処理を反映。
+  - `overflow-anchor: none`によりブラウザ標準のスクロールアンカリングとの競合を排除。
+  - スクロール位置復元を二重`requestAnimationFrame`化し、遅延レイアウト調整にも対応。
+  - ヘッドレス環境では再現できない実機依存の挙動のため、Galaxy実機での再確認が必要。
+  - 業務ロジック・質問文・選択肢・JSON構造は変更なし。
+  - 正本とのSHA-256一致を確認済み：
+    `3cefad5b74b2c3ac98e089fffdb14975c36a8328e03b4c246b721f5ed987569f`
+
 ## [Unreleased] - 2026-07-14 (2)
 
 - 正本（brain-garden）で追加修正したスクロールジャンプ対策を反映。

@@ -34,6 +34,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
       line-height: 1.55;
       -webkit-tap-highlight-color: transparent;
+      overflow-anchor: none;
     }
     button, input, select, textarea { font: inherit; }
     button { cursor: pointer; }
@@ -1203,7 +1204,10 @@ const HEAT_ITEMS = {
           </article>
         `).join("");
         window.scrollTo(0, scrollY);
-        requestAnimationFrame(() => window.scrollTo(0, scrollY));
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+          requestAnimationFrame(() => window.scrollTo(0, scrollY));
+        });
 
         wrap.querySelectorAll(".item-summary").forEach(button => {
           button.addEventListener("click", () => {
@@ -1430,7 +1434,10 @@ const HEAT_ITEMS = {
           </section>`;
         }).join("");
         window.scrollTo(0, scrollY);
-        requestAnimationFrame(() => window.scrollTo(0, scrollY));
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+          requestAnimationFrame(() => window.scrollTo(0, scrollY));
+        });
       }
 
       function renderDetailField(item, definition) {
@@ -1482,7 +1489,10 @@ const HEAT_ITEMS = {
           </section>`;
         }).join("");
         window.scrollTo(0, scrollY);
-        requestAnimationFrame(() => window.scrollTo(0, scrollY));
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+          requestAnimationFrame(() => window.scrollTo(0, scrollY));
+        });
       }
 
       function findEquipmentItem(id) {
