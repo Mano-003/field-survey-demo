@@ -678,10 +678,30 @@ const GENCHI_SECTIONS = [
     { id:'drainage_facility', label:'給排水設備の現況', type:'genchi' },
     { id:'building_exterior', label:'建物外観・劣化状況', type:'genchi' },
     { id:'view_sunlight', label:'眺望・日照', type:'genchi' },
+    { id:'transport_environment', label:'交通・周辺環境', type:'genchi' },
   ]},
 ];
 DATA.kodate.genchi = { sections: GENCHI_SECTIONS };
 DATA.kubun.genchi = { sections: GENCHI_SECTIONS };
+
+// 交通・周辺環境：徒歩分数を持つ項目共通の情報源選択肢
+const MINUTES_SOURCE_OPTIONS = ['地図計測','現地実測','既存資料','売主申告','未確認'];
+// ＋追加で複数登録できるグループの定義（ラベル・自由入力フィールド・施設種別の有無）
+const TRANSPORT_GROUPS = {
+  busStops: { label:'バス', fields:[
+    { key:'company', label:'バス会社', ph:'例：〇〇バス' },
+    { key:'stopName', label:'停留所名', ph:'例：〇〇停留所' },
+  ] },
+  stations: { label:'駅', fields:[
+    { key:'lineName', label:'路線名', ph:'例：〇〇線' },
+    { key:'stationName', label:'駅名', ph:'例：〇〇駅' },
+  ] },
+  supermarkets: { label:'スーパー', fields:[ { key:'name', label:'施設名', ph:'例：〇〇スーパー' } ] },
+  convenienceStores: { label:'コンビニ', fields:[ { key:'name', label:'施設名', ph:'例：〇〇コンビニ' } ] },
+  hospitals: { label:'病院', fields:[ { key:'name', label:'施設名', ph:'例：〇〇病院' } ] },
+  otherFacilities: { label:'その他施設', hasType:true, fields:[ { key:'name', label:'施設名', ph:'例：〇〇公園' } ] },
+};
+const OTHER_FACILITY_TYPES = ['公園','郵便局','ドラッグストア','保育園','商業施設','その他'];
 
 // ===== HELPERS =====
 // 現地調査(genchi)は土地建物用／区分所有用で共通表示のため、type非依存のキーにする
@@ -977,6 +997,64 @@ function renderViewSunlight(item,s){
   </div>`;
 }
 
+// ===== 交通・周辺環境 =====
+// busStops/stations/supermarkets/convenienceStores/hospitals/otherFacilitiesは
+// 「＋追加」で複数登録できる配列。elementarySchool/juniorHighSchoolは現時点で単一。
+// 徒歩分数の情報源(minutesSource)は全項目に個別で持たせ、未選択でも入力完了を妨げない。
+function emptyTransportEntry(groupKey){
+  if(groupKey==='busStops') return {company:'',stopName:'',walkMinutes:'',minutesSource:''};
+  if(groupKey==='stations') return {lineName:'',stationName:'',walkMinutes:'',minutesSource:''};
+  if(groupKey==='otherFacilities') return {type:'',name:'',walkMinutes:'',minutesSource:''};
+  return {name:'',walkMinutes:'',minutesSource:''};
+}
+function renderTransportGroupEntries(itemId,groupKey,s){
+  const cfg=TRANSPORT_GROUPS[groupKey];
+  if(!s[groupKey]||!s[groupKey].length) s[groupKey]=[emptyTransportEntry(groupKey)];
+  const list=s[groupKey];
+  let html='';
+  list.forEach((entry,i)=>{
+    html+=`<div class="detail-block">
+      <div class="detail-field">
+        <div class="detail-label">${cfg.label}${i+1}${list.length>1?` <button type="button" class="link-btn" onclick="removeTransportEntry('${itemId}','${groupKey}',${i})">削除</button>`:''}</div>
+      </div>`;
+    if(cfg.hasType){
+      html+=`<div class="detail-field"><div class="detail-label">施設種別</div><div class="sub-sel-group">${OTHER_FACILITY_TYPES.map(t=>`<button type="button" class="sub-sel-btn${entry.type===t?' sel':''}" onclick="setTransportChoice('${itemId}','${groupKey}',${i},'type','${t}')">${t}</button>`).join('')}</div></div>`;
+    }
+    cfg.fields.forEach(f=>{
+      html+=`<div class="detail-field"><div class="detail-label">${f.label}</div><input type="text" class="detail-input" placeholder="${f.ph||''}" value="${escAttr(entry[f.key]||'')}" oninput="setTransportText('${itemId}','${groupKey}',${i},'${f.key}',this.value)"></div>`;
+    });
+    html+=`<div class="detail-field"><div class="detail-label">徒歩（分）</div><input type="number" min="0" step="1" inputmode="numeric" class="detail-input" value="${escAttr(entry.walkMinutes||'')}" onchange="setTransportNumber('${itemId}','${groupKey}',${i},'walkMinutes',this.value)"></div>`;
+    html+=`<div class="detail-field"><div class="detail-label">情報源（任意）</div><div class="sub-sel-group">${MINUTES_SOURCE_OPTIONS.map(m=>`<button type="button" class="sub-sel-btn${entry.minutesSource===m?' sel':''}" onclick="setTransportChoice('${itemId}','${groupKey}',${i},'minutesSource','${m}')">${m}</button>`).join('')}</div></div>`;
+    html+=`</div>`;
+  });
+  html+=`<button type="button" class="link-btn" style="margin:0 14px 10px" onclick="addTransportEntry('${itemId}','${groupKey}')">＋ ${cfg.label}を追加</button>`;
+  return html;
+}
+function renderSingleFacility(itemId,key,label,s){
+  if(!s[key]) s[key]={name:'',walkMinutes:'',minutesSource:''};
+  const entry=s[key];
+  return `<div class="detail-block">
+    <div class="detail-field"><div class="detail-label">${label}</div></div>
+    <div class="detail-field"><div class="detail-label">施設名</div><input type="text" class="detail-input" placeholder="例：〇〇${label}" value="${escAttr(entry.name||'')}" oninput="setSingleFacilityText('${itemId}','${key}','name',this.value)"></div>
+    <div class="detail-field"><div class="detail-label">徒歩（分）</div><input type="number" min="0" step="1" inputmode="numeric" class="detail-input" value="${escAttr(entry.walkMinutes||'')}" onchange="setSingleFacilityNumber('${itemId}','${key}','walkMinutes',this.value)"></div>
+    <div class="detail-field"><div class="detail-label">情報源（任意）</div><div class="sub-sel-group">${MINUTES_SOURCE_OPTIONS.map(m=>`<button type="button" class="sub-sel-btn${entry.minutesSource===m?' sel':''}" onclick="setSingleFacilityChoice('${itemId}','${key}','minutesSource','${escAttr(m)}')">${m}</button>`).join('')}</div></div>
+  </div>`;
+}
+function renderTransportEnvironment(item,s){
+  let html=`<div class="legal-note">徒歩分数は現地調査の参考記録です。広告表示に用いる「徒歩◯分」表記は別途、表示ルールに基づき算出・確認してください。本欄の入力値から広告表示の可否や法的な適否を自動判断するものではありません。</div>`;
+  html+=`<div class="detail-label" style="padding:0 14px;margin-top:2px">🚌 交通</div>`;
+  html+=renderTransportGroupEntries(item.id,'busStops',s);
+  html+=renderTransportGroupEntries(item.id,'stations',s);
+  html+=`<div class="detail-label" style="padding:0 14px;margin-top:2px">🏫 周辺施設</div>`;
+  html+=renderSingleFacility(item.id,'elementarySchool','小学校',s);
+  html+=renderSingleFacility(item.id,'juniorHighSchool','中学校',s);
+  html+=renderTransportGroupEntries(item.id,'supermarkets',s);
+  html+=renderTransportGroupEntries(item.id,'convenienceStores',s);
+  html+=renderTransportGroupEntries(item.id,'hospitals',s);
+  html+=renderTransportGroupEntries(item.id,'otherFacilities',s);
+  return html;
+}
+
 function renderConfirmBlock(id,c){
   const statuses=['未確認','確認済','該当なし'];
   return `<div class="detail-block" style="margin:0">
@@ -1013,6 +1091,7 @@ function renderGenchiItem(item){
   else if(item.id==='drainage_facility') bodyHtml=renderDrainageFacility(item,s);
   else if(item.id==='building_exterior') bodyHtml=renderBuildingExterior(item,s);
   else if(item.id==='view_sunlight') bodyHtml=renderViewSunlight(item,s);
+  else if(item.id==='transport_environment') bodyHtml=renderTransportEnvironment(item,s);
 
   return `<div class="item-card${hasNote?' has-note':''}" id="card_${item.id}">
     <div class="item-main" style="flex-direction:column;align-items:flex-start;gap:6px">
@@ -1042,11 +1121,11 @@ function setRoadField(id,idx,field,val){
   ss(id,{roads:s.roads});
   reRenderItem(id);
 }
-// 接道の追加・削除ボタンの連打防止（短時間の多重実行を防ぐ）
-let roadActionLock=false;
-function lockRoadAction(){
-  roadActionLock=true;
-  setTimeout(()=>{roadActionLock=false;},400);
+// 複数登録リスト（接道・交通・周辺施設）の追加・削除ボタンの連打防止
+let genchiListActionLock=false;
+function lockGenchiListAction(){
+  genchiListActionLock=true;
+  setTimeout(()=>{genchiListActionLock=false;},400);
 }
 let genchiToastTimer;
 function showGenchiToast(msg){
@@ -1064,8 +1143,8 @@ function showGenchiToast(msg){
   genchiToastTimer=setTimeout(()=>el.classList.remove('show'),1600);
 }
 function addRoad(id){
-  if(roadActionLock) return;
-  lockRoadAction();
+  if(genchiListActionLock) return;
+  lockGenchiListAction();
   const s=gs(id);
   if(!s.roads) s.roads=[];
   s.roads.push({direction:'',ownership:'',roadType:'',widthM:'',frontageM:''});
@@ -1074,15 +1153,80 @@ function addRoad(id){
   showGenchiToast(`✓ 接道${s.roads.length}を追加しました`);
 }
 function removeRoad(id,idx){
-  if(roadActionLock) return;
+  if(genchiListActionLock) return;
   const s=gs(id);
   if(!s.roads||s.roads.length<=1) return;
-  lockRoadAction();
+  lockGenchiListAction();
   const removedNumber=idx+1;
   s.roads.splice(idx,1);
   ss(id,{roads:s.roads});
   reRenderItem(id);
   showGenchiToast(`✓ 接道${removedNumber}を削除しました`);
+}
+
+// ---- 交通・周辺環境：複数登録グループ（バス／駅／スーパー／コンビニ／病院／その他施設） ----
+function addTransportEntry(id,groupKey){
+  if(genchiListActionLock) return;
+  lockGenchiListAction();
+  const s=gs(id);
+  if(!s[groupKey]) s[groupKey]=[];
+  s[groupKey].push(emptyTransportEntry(groupKey));
+  ss(id,{[groupKey]:s[groupKey]});
+  reRenderItem(id);
+  showGenchiToast(`✓ ${TRANSPORT_GROUPS[groupKey].label}${s[groupKey].length}を追加しました`);
+}
+function removeTransportEntry(id,groupKey,idx){
+  if(genchiListActionLock) return;
+  const s=gs(id);
+  if(!s[groupKey]||s[groupKey].length<=1) return;
+  lockGenchiListAction();
+  const removedNumber=idx+1;
+  s[groupKey].splice(idx,1);
+  ss(id,{[groupKey]:s[groupKey]});
+  reRenderItem(id);
+  showGenchiToast(`✓ ${TRANSPORT_GROUPS[groupKey].label}${removedNumber}を削除しました`);
+}
+function setTransportText(id,groupKey,idx,field,val){
+  const s=gs(id);
+  if(!s[groupKey]||!s[groupKey][idx]) return;
+  s[groupKey][idx][field]=val;
+  ss(id,{[groupKey]:s[groupKey]});
+  // テキスト入力はフォーカス維持のため再描画しない
+}
+function setTransportNumber(id,groupKey,idx,field,val){
+  const s=gs(id);
+  if(!s[groupKey]||!s[groupKey][idx]) return;
+  s[groupKey][idx][field]=val;
+  ss(id,{[groupKey]:s[groupKey]});
+  reRenderItem(id);
+}
+function setTransportChoice(id,groupKey,idx,field,val){
+  const s=gs(id);
+  if(!s[groupKey]||!s[groupKey][idx]) return;
+  s[groupKey][idx][field]=val;
+  ss(id,{[groupKey]:s[groupKey]});
+  reRenderItem(id);
+}
+// ---- 交通・周辺環境：単一項目（小学校／中学校、現時点では1件のみ） ----
+function setSingleFacilityText(id,key,field,val){
+  const s=gs(id);
+  if(!s[key]) s[key]={name:'',walkMinutes:'',minutesSource:''};
+  s[key][field]=val;
+  ss(id,{[key]:s[key]});
+}
+function setSingleFacilityNumber(id,key,field,val){
+  const s=gs(id);
+  if(!s[key]) s[key]={name:'',walkMinutes:'',minutesSource:''};
+  s[key][field]=val;
+  ss(id,{[key]:s[key]});
+  reRenderItem(id);
+}
+function setSingleFacilityChoice(id,key,field,val){
+  const s=gs(id);
+  if(!s[key]) s[key]={name:'',walkMinutes:'',minutesSource:''};
+  s[key][field]=val;
+  ss(id,{[key]:s[key]});
+  reRenderItem(id);
 }
 function setConfirmStatus(id,status){
   const s=gs(id);
@@ -1116,7 +1260,15 @@ function genchiDone(id,s){
   if(id==='infrastructure') return !!(s.drinkingWater&&s.gas&&s.electricity&&s.drainage);
   if(id==='drainage_facility'||id==='building_exterior') return !!s.main;
   if(id==='view_sunlight') return !!(s.sunlight&&s.view);
+  if(id==='transport_environment') return transportEnvironmentDone(s);
   return false;
+}
+// 情報源(minutesSource)は任意のため、完了判定には使わない
+function transportEnvironmentDone(s){
+  const groups=['busStops','stations','supermarkets','convenienceStores','hospitals','otherFacilities'];
+  const groupFilled=groups.some(g=>(s[g]||[]).some(e=>e.name||e.company||e.stopName||e.lineName||e.stationName||e.walkMinutes));
+  const singleFilled=['elementarySchool','juniorHighSchool'].some(k=>s[k]&&(s[k].name||s[k].walkMinutes));
+  return groupFilled||singleFilled;
 }
 function genchiDisplayValue(id,s){
   if(id==='road_access'){
@@ -1129,6 +1281,18 @@ function genchiDisplayValue(id,s){
   }
   if(id==='drainage_facility'||id==='building_exterior') return s.main||'－';
   if(id==='view_sunlight') return [s.sunlight,s.view].filter(Boolean).join('／')||'－';
+  if(id==='transport_environment'){
+    const parts=[];
+    if((s.busStops||[]).some(e=>e.stopName||e.company)) parts.push('バス');
+    if((s.stations||[]).some(e=>e.stationName||e.lineName)) parts.push('駅');
+    if(s.elementarySchool&&s.elementarySchool.name) parts.push('小学校');
+    if(s.juniorHighSchool&&s.juniorHighSchool.name) parts.push('中学校');
+    if((s.supermarkets||[]).some(e=>e.name)) parts.push('スーパー');
+    if((s.convenienceStores||[]).some(e=>e.name)) parts.push('コンビニ');
+    if((s.hospitals||[]).some(e=>e.name)) parts.push('病院');
+    if((s.otherFacilities||[]).some(e=>e.name)) parts.push('その他施設');
+    return parts.length?parts.join('・'):'－';
+  }
   return '－';
 }
 // コピー／メール本文用のテキスト詳細行（配列で返す）
@@ -1153,6 +1317,32 @@ function genchiTextDetail(id,s){
     if(s.openingDirections&&s.openingDirections.length) lines.push(`  　開口部方角：${s.openingDirections.join('・')}`);
     if(s.weather) lines.push(`  　天候：${s.weather}`);
     if(s.obstructions&&s.obstructions.length) lines.push(`  　遮蔽物：${s.obstructions.join('・')}`);
+  } else if(id==='transport_environment'){
+    const src=v=>v?`（${v}）`:'';
+    (s.busStops||[]).forEach((e,i)=>{
+      if(!e.company&&!e.stopName&&!e.walkMinutes) return;
+      lines.push(`  　バス${i+1}：${e.company||'－'}／${e.stopName||'－'}／徒歩${e.walkMinutes||'－'}分${src(e.minutesSource)}`);
+    });
+    (s.stations||[]).forEach((e,i)=>{
+      if(!e.lineName&&!e.stationName&&!e.walkMinutes) return;
+      lines.push(`  　駅${i+1}：${e.lineName||'－'}／${e.stationName||'－'}／徒歩${e.walkMinutes||'－'}分${src(e.minutesSource)}`);
+    });
+    if(s.elementarySchool&&(s.elementarySchool.name||s.elementarySchool.walkMinutes)){
+      lines.push(`  　小学校：${s.elementarySchool.name||'－'}／徒歩${s.elementarySchool.walkMinutes||'－'}分${src(s.elementarySchool.minutesSource)}`);
+    }
+    if(s.juniorHighSchool&&(s.juniorHighSchool.name||s.juniorHighSchool.walkMinutes)){
+      lines.push(`  　中学校：${s.juniorHighSchool.name||'－'}／徒歩${s.juniorHighSchool.walkMinutes||'－'}分${src(s.juniorHighSchool.minutesSource)}`);
+    }
+    [['supermarkets','スーパー'],['convenienceStores','コンビニ'],['hospitals','病院']].forEach(([g,label])=>{
+      (s[g]||[]).forEach((e,i)=>{
+        if(!e.name&&!e.walkMinutes) return;
+        lines.push(`  　${label}${i+1}：${e.name||'－'}／徒歩${e.walkMinutes||'－'}分${src(e.minutesSource)}`);
+      });
+    });
+    (s.otherFacilities||[]).forEach((e,i)=>{
+      if(!e.name&&!e.type&&!e.walkMinutes) return;
+      lines.push(`  　その他施設${i+1}：${e.type?'['+e.type+'] ':''}${e.name||'－'}／徒歩${e.walkMinutes||'－'}分${src(e.minutesSource)}`);
+    });
   }
   if(s.confirm&&s.confirm.status&&s.confirm.status!=='未確認'){
     lines.push(`  　確認情報：${s.confirm.status}${s.confirm.date?'／'+s.confirm.date:''}${s.confirm.time?' '+s.confirm.time:''}${s.confirm.by?'／'+s.confirm.by:''}`);
