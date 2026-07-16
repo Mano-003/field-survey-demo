@@ -41,3 +41,18 @@ GitHub Pages検証公開用リポジトリです。
 2. 変更内容をレビュー
 3. 承認後、同ファイルをこのリポジトリの `index.html` へ無改変で反映（SHA-256で同一性確認）
 4. `CHANGELOG.md` に反映内容を追記してコミット
+
+## ui-candidate/ — UI候補版（比較検証用・未採用）
+
+`ui-candidate/index.html` は、現行版（`index.html`）とは別のUI方針の候補版です。
+正本は非公開リポジトリ brain-garden の `apps/field-survey-hub-ui-candidate/index.html`
+（ブランチ：`claude/field-survey-ui-candidate`）で、現行版の正本
+（`apps/field-survey-hub/index.html`）とは完全に別管理です。
+
+- 公開URL：`https://mano-003.github.io/field-survey-demo/ui-candidate/`
+- 現行版のURL（`https://mano-003.github.io/field-survey-demo/`）と並べて実機比較するための配置です。
+- JSON構造は現行版（schemaVersion "1.2"）と異なる新系統（schemaVersion "2.0"）です。
+  **現行版のJSONとは互換性がなく、自動統合もしません。**
+- 採用が決まるまで、このディレクトリの追加・更新が現行版（`index.html`）に影響することはありません。
+- 更新方法は現行版と同様（正本側で変更→レビュー→SHA-256確認のうえ無改変で反映）。
+  詳細は `ui-candidate/CHANGELOG.md` を参照してください。

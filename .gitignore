@@ -3,9 +3,15 @@
 #   売却案件_<案件ID>_<yyyymmdd>.json
 売却案件_*.json
 
+# ui-candidate/ の「保存」機能が生成するファイル名パターン:
+#   現地確認_<案件名>_<yyyymmdd>.json
+現地確認_*.json
+
 # 案件データの置き場として使う可能性のあるディレクトリ（用意した場合のみ対象）
 /case-data/
 /exports/
+/ui-candidate/case-data/
+/ui-candidate/exports/
 
 # OS/エディタ生成物
 .DS_Store

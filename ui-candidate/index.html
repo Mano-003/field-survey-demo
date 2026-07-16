@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>現地確認チェックアプリ</title>
+<style>
+  :root {
+    --navy:#1a2744; --navy-light:#243460; --gold:#c8973a; --gold-light:#e8b85c;
+    --cream:#f8f6f1; --white:#fff; --gray-100:#f2f2f2; --gray-300:#d0d0d0;
+    --gray-500:#888; --gray-700:#444; --green:#2e7d52; --green-light:#e8f5ee;
+    --red:#c0392b; --red-light:#fdecea; --orange:#e67e22; --orange-light:#fef3e8;
+    --blue:#1a6fa8; --blue-light:#e6f2fb;
+    --radius:12px; --radius-sm:8px;
+    --shadow:0 2px 12px rgba(0,0,0,.08); --shadow-lg:0 4px 24px rgba(0,0,0,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh;font-size:15px}
+
+  /* HEADER */
+  .header{background:var(--navy);color:#fff;padding:14px 14px 0;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-lg)}
+  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .header-title{font-size:17px;font-weight:700;letter-spacing:.02em}
+  .header-subtitle{font-size:11px;color:var(--gold-light);margin-top:2px}
+  .progress-bar-wrap{background:rgba(255,255,255,.15);border-radius:4px;height:6px;margin-bottom:10px;overflow:hidden}
+  .progress-bar{background:var(--gold);height:100%;border-radius:4px;transition:width .3s}
+  .progress-label{font-size:11px;color:var(--gold-light);text-align:right}
+  .type-switcher{display:flex;gap:6px;padding-bottom:12px}
+  .type-btn{flex:1;padding:8px 4px;border:none;border-radius:var(--radius-sm) var(--radius-sm) 0 0;font-size:12px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.12);color:rgba(255,255,255,.6);transition:all .2s;font-family:inherit}
+  .type-btn.active{background:var(--gold);color:var(--navy)}
+
+  /* DOC TABS */
+  .doc-tabs{display:flex;background:var(--gray-100);border-bottom:2px solid var(--gray-300)}
+  .doc-tab{flex:1;padding:11px 8px;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:inherit;transition:all .2s}
+  .doc-tab.active{color:var(--navy);border-bottom-color:var(--gold);background:var(--white)}
+
+  /* MAIN */
+  .main{padding:0 0 100px}
+
+  /* PROPERTY */
+  .property-section{background:var(--white);margin:12px 12px 0;border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);border-left:4px solid var(--gold)}
+  .property-label{font-size:11px;color:var(--gray-500);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .property-input{width:100%;border:none;font-size:16px;font-weight:700;color:var(--navy);background:transparent;outline:none;font-family:inherit}
+  .property-input::placeholder{color:var(--gray-300);font-weight:400}
+
+  /* SECTION */
+  .section-group{margin:12px 12px 0}
+  .section-header{display:flex;align-items:center;gap:8px;padding:10px 0 6px;cursor:pointer;user-select:none}
+  .section-icon{width:28px;height:28px;background:var(--navy);color:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+  .section-title{font-size:14px;font-weight:700;color:var(--navy);flex:1}
+  .section-count{font-size:11px;color:var(--gray-500);background:var(--gray-100);padding:2px 8px;border-radius:10px}
+  .section-count.done{background:var(--green-light);color:var(--green)}
+  .chevron{font-size:12px;color:var(--gray-500);transition:transform .2s}
+  .section-group.collapsed .chevron{transform:rotate(-90deg)}
+  .section-group.collapsed .section-items{display:none}
+  .section-items{display:flex;flex-direction:column;gap:6px;padding-bottom:4px}
+
+  /* ITEM CARD */
+  .item-card{background:var(--white);border-radius:var(--radius-sm);box-shadow:var(--shadow);overflow:hidden;border:1.5px solid transparent;transition:border-color .2s}
+  .item-card.has-note{border-color:var(--orange)}
+  .item-main{display:flex;align-items:center;padding:12px 14px;gap:10px;min-height:52px}
+  .item-label{flex:1;font-size:14px;font-weight:500;line-height:1.4;color:var(--navy)}
+  .item-label small{display:block;font-size:11px;color:var(--gray-500);font-weight:400;margin-top:2px}
+
+  /* ARI/NASHI TOGGLE */
+  .toggle-group{display:flex;gap:4px;flex-shrink:0}
+  .toggle-btn{padding:7px 14px;border:1.5px solid var(--gray-300);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;background:var(--white);color:var(--gray-500);transition:all .15s;font-family:inherit;min-width:44px;text-align:center}
+  .toggle-btn.sel-ari{background:var(--green);border-color:var(--green);color:#fff}
+  .toggle-btn.sel-nashi{background:var(--gray-500);border-color:var(--gray-500);color:#fff}
+
+  /* 熱源 SUB-TOGGLE */
+  .netsugeng-wrap{padding:0 14px 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .netsugeng-label{font-size:11px;color:var(--gray-500);font-weight:600;margin-right:2px;white-space:nowrap}
+  .netsugeng-btn{padding:5px 12px;border:1.5px solid var(--gray-300);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:var(--white);color:var(--gray-500);transition:all .15s;font-family:inherit}
+  .netsugeng-btn.sel{background:var(--blue);border-color:var(--blue);color:#fff}
+
+  /* 告知書 RADIO */
+  .radio-group{display:flex;flex-direction:column;gap:5px;padding:0 14px 12px}
+  .radio-btn{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:8px;cursor:pointer;border:1.5px solid var(--gray-300);background:var(--white);font-size:13px;color:var(--gray-700);transition:all .15s;font-family:inherit;text-align:left;width:100%}
+  .radio-btn.sel-normal{border-color:var(--navy);background:#e8ecf6;color:var(--navy);font-weight:700}
+  .radio-btn.sel-warning{border-color:var(--red);background:var(--red-light);color:var(--red);font-weight:700}
+  .radio-btn.sel-caution{border-color:var(--orange);background:var(--orange-light);color:var(--orange);font-weight:700}
+  .radio-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--gray-300);flex-shrink:0;position:relative}
+  .radio-btn.sel-normal .radio-dot{border-color:var(--navy);background:var(--navy)}
+  .radio-btn.sel-warning .radio-dot{border-color:var(--red);background:var(--red)}
+  .radio-btn.sel-caution .radio-dot{border-color:var(--orange);background:var(--orange)}
+  .radio-dot::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:#fff;display:none}
+  .radio-btn.sel-normal .radio-dot::after,
+  .radio-btn.sel-warning .radio-dot::after,
+  .radio-btn.sel-caution .radio-dot::after{display:block}
+
+  /* DETAIL INPUT */
+  .detail-input-wrap{padding:0 14px 10px}
+  .detail-label{font-size:11px;color:var(--gray-500);margin-bottom:4px;font-weight:600}
+  .detail-input{width:100%;border:1.5px solid var(--gray-300);border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;color:var(--navy);outline:none;background:var(--gray-100)}
+  .detail-input:focus{border-color:var(--navy);background:#fff}
+
+  /* DETAIL BLOCK (告知書展開フィールド) */
+  .detail-block{background:#f0f4ff;border-radius:8px;margin:0 14px 12px;padding:12px;display:flex;flex-direction:column;gap:10px;border-left:3px solid var(--navy)}
+  .detail-field{display:flex;flex-direction:column;gap:4px}
+  .detail-field .detail-label{color:var(--navy-light);font-size:11px;font-weight:700}
+  .detail-field .detail-input{background:#fff;font-size:13px;padding:8px 10px}
+  .sub-sel-group{display:flex;flex-wrap:wrap;gap:5px}
+  .sub-sel-btn{padding:5px 11px;border:1.5px solid var(--gray-300);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:var(--gray-700);transition:all .15s;font-family:inherit}
+  .sub-sel-btn.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  /* NOTE */
+  .note-toggle{display:flex;align-items:center;gap:6px;padding:0 14px 10px;cursor:pointer;user-select:none}
+  .note-toggle-label{font-size:12px;color:var(--orange);font-weight:600}
+  .note-area{padding:0 14px 12px;display:none}
+  .note-area.open{display:block}
+  .note-textarea{width:100%;border:1.5px solid var(--orange);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;color:var(--navy);resize:none;outline:none;background:var(--orange-light);min-height:72px}
+
+  /* BOTTOM */
+  .bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--gray-300);padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;z-index:99}
+  .btn-summary{flex:1;background:var(--navy);color:#fff;border:none;border-radius:var(--radius-sm);padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-reset{background:var(--gray-100);color:var(--gray-700);border:1.5px solid var(--gray-300);border-radius:var(--radius-sm);padding:13px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end}
+  .modal-overlay.open{display:flex}
+  .modal-content{background:#fff;border-radius:var(--radius) var(--radius) 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))}
+  .modal-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+  .modal-close{background:var(--gray-100);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+  .summary-section-title{font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.05em;padding:12px 0 4px}
+  .summary-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px}
+  .summary-badge{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+  .badge-ari{background:var(--green-light);color:var(--green)}
+  .badge-nashi{background:var(--gray-100);color:var(--gray-500)}
+  .badge-warning{background:var(--red-light);color:var(--red)}
+  .badge-caution{background:var(--orange-light);color:var(--orange)}
+  .summary-item-name{color:var(--navy);flex:1}
+  .summary-sub{color:var(--blue);font-size:12px;margin-top:2px}
+  .summary-note{color:var(--orange);font-size:12px;margin-top:2px}
+  .btn-copy{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:var(--radius-sm);padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px}
+  .btn-pdf{width:100%;background:var(--red);color:#fff;border:none;border-radius:var(--radius-sm);padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px}
+  .btn-mail{width:100%;background:var(--navy);color:#fff;border:none;border-radius:var(--radius-sm);padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px}
+  .btn-save{background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .btn-load{background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+  #fileInput{display:none}
+  .mail-to-wrap{margin-top:12px}
+  .mail-to-wrap .detail-label{margin-bottom:5px}
+
+  /* GENCHI (現地調査) - reuses existing tokens only, no new palette */
+  .legal-note{background:var(--cream);border:1px solid var(--gold-light);border-radius:8px;padding:10px 12px;margin:0 14px 10px;font-size:12px;color:var(--gray-700);line-height:1.5}
+  .link-btn{background:none;border:none;padding:4px 2px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title">📋 現地確認チェック</div>
+      <div class="header-subtitle">現地調査 ＋ 付帯設備表 ＋ 物件状況確認書</div>
+    </div>
+    <div id="progressLabel" class="progress-label">0 / 0 項目</div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+  <div class="type-switcher">
+    <button class="type-btn active" onclick="switchType('kodate')">🏠 土地建物用</button>
+    <button class="type-btn" onclick="switchType('kubun')">🏢 区分所有用</button>
+  </div>
+</div>
+
+<div class="doc-tabs">
+  <button class="doc-tab active" data-doc="futai" onclick="switchDoc('futai')">付帯設備表</button>
+  <button class="doc-tab" data-doc="kokuchi" onclick="switchDoc('kokuchi')">物件状況確認書</button>
+  <button class="doc-tab" data-doc="genchi" onclick="switchDoc('genchi')">現地調査</button>
+</div>
+
+<div class="main" id="mainContent"></div>
+
+<div class="bottom-bar">
+  <button class="btn-reset" onclick="confirmReset()" title="リセット">🔄</button>
+  <button class="btn-save" onclick="saveJSON()">💾 保存</button>
+  <button class="btn-load" onclick="document.getElementById('fileInput').click()">📂 読込</button>
+  <button class="btn-summary" onclick="openSummary()">📊 確認</button>
+</div>
+<input type="file" id="fileInput" accept=".json" onchange="loadJSON(event)">
+
+<div class="modal-overlay" id="summaryModal">
+  <div class="modal-content">
+    <div class="modal-title">入力状況サマリー <button class="modal-close" onclick="closeSummary()">✕</button></div>
+    <div id="summaryContent"></div>
+    <button class="btn-copy" onclick="copySummary()">📋 テキストをコピー</button>
+    <button class="btn-pdf" onclick="printSummary()">🖨️ PDF保存 / 印刷</button>
+    <div class="mail-to-wrap">
+      <div class="detail-label">送信先メールアドレス（任意・自動保存されます）</div>
+      <input type="email" class="detail-input" id="mailToInput" placeholder="例：example@kohikai-oita.co.jp" inputmode="email">
+    </div>
+    <button class="btn-mail" onclick="mailSummary()">✉️ メールで送る</button>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const SCHEMA_VERSION = '2.0';
+let currentType = 'kodate', currentDoc = 'futai';
+let state = {}, noteOpen = {}, confirmOpen = {};
+let caseInfo = { name: '' };
+
+// ===== HEAT SOURCE OPTIONS =====
+// items with heat source selection
+const HEAT_ITEMS = {
+  'kyutoki':     ['電気','ガス','石油','太陽熱'],
+  'konro':       ['電気','ガス'],
+  'guriru':      ['電気','ガス'],
+  'biruto_oven': ['電気','ガス'],
+  'biruto_dish': ['電気','ガス'],
+  'reidanbo':    ['電気','ガス','石油'],
+  'reibo':       ['電気','ガス','石油'],
+  'danbo':       ['電気','ガス','石油'],
+  'yuka_danbo':  ['電気','ガス','石油'],
+  // kubun
+  'kyutoki_k':   ['電気','ガス','石油','太陽熱'],
+  'konro_k':     ['電気','ガス'],
+  'guriru_k':    ['電気','ガス'],
+  'oven_k':      ['電気','ガス'],
+  'dish_k':      ['電気','ガス'],
+  'reidanbo_k':  ['電気','ガス','石油'],
+  'reibouki_k':  ['電気','ガス','石油'],
+  'danbouki_k':  ['電気','ガス','石油'],
+  'yukadan_k':   ['電気','ガス','石油'],
+};
+
+// ===== FEATURE OPTIONS (付帯機能) =====
+const FEATURE_ITEMS = {
+  // 浴槽
+  'yusou':      {label:'付帯機能', opts:['追炊き','足し湯','保温','湯張り']},
+  'yusou_k':    {label:'付帯機能', opts:['追炊き','足し湯','保温','湯張り']},
+  // 洗面設備
+  'senmen_1f':  {label:'設備内容', opts:['洗面台','照明','シャワー','コンセント','鏡','曇り止め']},
+  'senmen_2f':  {label:'設備内容', opts:['洗面台','照明','シャワー','コンセント','鏡','曇り止め']},
+  'senmen1_k':  {label:'設備内容', opts:['洗面台','照明','シャワー','コンセント','鏡','曇り止め']},
+  // トイレ
+  'toilet_1f':  {label:'付帯機能', opts:['温水洗浄','保温','乾燥','ロータンク','手洗い']},
+  'toilet_2f':  {label:'付帯機能', opts:['温水洗浄','保温','乾燥','ロータンク','手洗い']},
+  'toilet1_k':  {label:'付帯機能', opts:['温水洗浄','保温','乾燥','ロータンク','手洗い']},
+  // 換気扇
+  'kanki':      {label:'設置箇所', opts:['浴室','洗面所','トイレ']},
+  'kanki_k':    {label:'設置箇所', opts:['浴室','洗面所','トイレ']},
+  // インターホン
+  'interphone': {label:'付帯機能', opts:['モニター有']},
+  'inter_k':    {label:'付帯機能', opts:['モニター有']},
+  // 収納棚
+  'shuno_tana': {label:'種別', opts:['食器棚（造付）','電動昇降戸棚','つり戸棚']},
+  'tana_k':     {label:'種別', opts:['食器棚（造付）','電動昇降戸棚','つり戸棚']},
+  // 収納スペース
+  'shuno_space':{label:'種別', opts:['床下収納','小屋裏収納']},
+  'space_k':    {label:'種別', opts:['床下収納','小屋裏収納']},
+};
+
+// ===== WARNING JUDGE =====
+const WARNING_VALS = new Set(['有','発見している','過去に雨漏りがあった','現在雨漏り箇所がある','過去に被害があった','現在被害がある','実施している','確認できない']);
+const CAUTION_VALS = new Set(['不明','協議中']);
+
+function valClass(v) {
+  if (!v) return '';
+  if (WARNING_VALS.has(v)) return 'sel-warning';
+  if (CAUTION_VALS.has(v)) return 'sel-caution';
+  return 'sel-normal';
+}
+function badgeClass(v) {
+  if (!v) return 'badge-nashi';
+  if (v === '無' || v === '発見していない' || v === '現在まで発見していない' || v === '実施していない') return 'badge-nashi';
+  if (WARNING_VALS.has(v)) return 'badge-warning';
+  if (CAUTION_VALS.has(v)) return 'badge-caution';
+  return 'badge-ari';
+}
+
+// ===== DATA =====
+const DATA = {
+  kodate:{
+    futai:{sections:[
+      {id:'kyuto',title:'給湯関係',icon:'🚿',items:[
+        {id:'kyutoki',label:'給湯器',sub:'熱源を選択できます'},
+        {id:'yuwakashi',label:'屋内式ガス湯沸かし器（個別）'},
+      ]},
+      {id:'kitchen',title:'キッチン設備',icon:'🍳',items:[
+        {id:'nagashidai',label:'流し台'},
+        {id:'konro',label:'コンロ',sub:'熱源を選択できます'},
+        {id:'renjifudo',label:'レンジフード（換気扇）'},
+        {id:'guriru',label:'グリル',sub:'熱源を選択できます'},
+        {id:'biruto_oven',label:'ビルトインオーブンレンジ',sub:'熱源を選択できます'},
+        {id:'biruto_dish',label:'ビルトイン食器洗浄乾燥機',sub:'熱源を選択できます'},
+        {id:'josuiki',label:'浄水器'},
+        {id:'disposer',label:'ディスポーザー'},
+      ]},
+      {id:'bath',title:'浴室設備',icon:'🛁',items:[
+        {id:'shower',label:'シャワー'},
+        {id:'bath_suisen',label:'混合水栓（浴室）'},
+        {id:'yusou',label:'浴槽',sub:'追炊き・足し湯・保温・湯張り'},
+        {id:'bath_mensai',label:'浴室洗面台'},
+        {id:'balance_kama',label:'屋内式風呂がま（バランス釜）'},
+        {id:'yokushitsu_kanso',label:'浴室内乾燥機'},
+      ]},
+      {id:'senmen',title:'洗面設備',icon:'🪥',items:[
+        {id:'senmen_1f',label:'洗面設備 1階',sub:'洗面台・照明・シャワー・コンセント・鏡'},
+        {id:'senmen_2f',label:'洗面設備 2階',sub:'洗面台・照明・シャワー・コンセント・鏡'},
+      ]},
+      {id:'toilet',title:'トイレ設備',icon:'🚽',items:[
+        {id:'toilet_1f',label:'トイレ 1階',sub:'便器・温水洗浄・保温・乾燥・ロータンク'},
+        {id:'toilet_2f',label:'トイレ 2階',sub:'便器・温水洗浄・保温・乾燥・ロータンク'},
+      ]},
+      {id:'sentaku',title:'洗濯設備',icon:'🧺',items:[
+        {id:'bousui_pan',label:'防水パン'},
+        {id:'sentaku_suisen',label:'洗濯用水栓'},
+      ]},
+      {id:'aircon',title:'空調関係',icon:'❄️',items:[
+        {id:'reidanbo',label:'冷暖房機',sub:'熱源を選択できます'},
+        {id:'reibo',label:'冷房機',sub:'熱源を選択できます'},
+        {id:'danbo',label:'暖房機',sub:'熱源を選択できます'},
+        {id:'yuka_danbo',label:'床暖房設備',sub:'熱源を選択できます'},
+        {id:'kanki',label:'換気扇',sub:'浴室・洗面所・トイレ'},
+        {id:'kanki_24',label:'24時間換気システム'},
+      ]},
+      {id:'other_main',title:'その他（主要設備）',icon:'🔔',items:[
+        {id:'interphone',label:'インターホン',sub:'モニター有無'},
+      ]},
+      {id:'shoumei',title:'照明関係',icon:'💡',items:[
+        {id:'indoor_light',label:'屋内照明器具'},
+        {id:'outdoor_light',label:'屋外照明器具'},
+      ]},
+      {id:'shuno',title:'収納関係',icon:'📦',items:[
+        {id:'shuno_tana',label:'収納棚',sub:'食器棚（造付）・電動昇降戸棚・つり戸棚'},
+        {id:'shuno_space',label:'収納スペース',sub:'床下収納・小屋裏収納'},
+        {id:'getabako',label:'下駄箱'},
+      ]},
+      {id:'tategu',title:'建具関係',icon:'🪟',items:[
+        {id:'amido',label:'網戸'},
+        {id:'amado',label:'雨戸'},
+        {id:'tatami_fusuma',label:'畳・ふすま'},
+        {id:'to_tobira',label:'戸・扉'},
+        {id:'shoji',label:'障子'},
+      ]},
+      {id:'tv',title:'テレビ視聴',icon:'📺',items:[
+        {id:'tv_antenna',label:'地上波用TVアンテナ'},
+        {id:'sat_antenna',label:'衛星アンテナ'},
+      ]},
+      {id:'other_equip',title:'その他設備',icon:'🏡',items:[
+        {id:'carpet',label:'カーペット（敷込）'},
+        {id:'curtain',label:'カーテン'},
+        {id:'curtain_rail',label:'カーテンレール'},
+        {id:'monoki',label:'物置'},
+        {id:'monohoshi',label:'物干し'},
+        {id:'outdoor_sink',label:'スロップシンク（屋外）'},
+        {id:'outdoor_suisen',label:'屋外水栓'},
+        {id:'niwaki',label:'庭木・庭石'},
+        {id:'mon_hei',label:'門・塀'},
+        {id:'garage',label:'車庫・カーポート'},
+        {id:'internet',label:'インターネット回線'},
+        {id:'kaijiki',label:'住宅用火災警報器'},
+        {id:'solar',label:'太陽光発電システム'},
+      ]},
+    ]},
+    kokuchi:{sections:[
+      {id:'building',title:'建物の状況',icon:'🏠',items:[
+        {id:'amamori',label:'①雨漏り',type:'kokuchi',
+          opts:['現在まで発見していない','過去に雨漏りがあった','現在雨漏り箇所がある'],
+          details:{
+            '過去に雨漏りがあった':[{key:'kasho',label:'箇所',ph:'例：2階天井、外壁サッシ周り'},{key:'koji_status',label:'修理工事',type:'select',choices:['未','済']},{key:'koji_ym',label:'工事時期（年月頃）',ph:'例：2018年6月頃'}],
+            '現在雨漏り箇所がある':[{key:'kasho',label:'箇所',ph:'例：1階和室天井'}],
+          }},
+        {id:'shiroari',label:'②白蟻被害',type:'kokuchi',
+          opts:['現在まで発見していない','白蟻予防工事あり','過去に被害があった','現在被害がある'],
+          details:{
+            '白蟻予防工事あり':[{key:'yobou_status',label:'工事',type:'select',choices:['済','未']},{key:'yobou_ym',label:'時期（年月頃）',ph:'例：2020年4月頃'}],
+            '過去に被害があった':[{key:'kasho',label:'箇所',ph:'例：床下、浴室周り'},{key:'kujyo_status',label:'駆除と修理工事',type:'select',choices:['済','未']},{key:'kujyo_ym',label:'時期（年頃）',ph:'例：2015年頃'}],
+            '現在被害がある':[{key:'kasho',label:'箇所',ph:'例：床下、柱'}],
+          }},
+        {id:'fugu',label:'③建物の不具合（傾き・腐食等）',type:'kokuchi',
+          opts:['発見していない','発見している'],
+          details:{
+            '発見している':[{key:'kasho_jokyo',label:'箇所・状況',ph:'例：1階床の傾き、浴室木部腐食',multiline:true}],
+          }},
+        {id:'haisu',label:'④給排水施設の故障・漏水',type:'kokuchi',
+          opts:['発見していない','発見している'],
+          details:{
+            '発見している':[{key:'kasho_jokyo',label:'箇所・状況',ph:'例：台所配管の水漏れ、排水詰まり',multiline:true}],
+          }},
+        {id:'reform',label:'⑤増改築・修繕・リフォーム履歴',type:'kokuchi',
+          opts:['実施していない','実施している','不明'],
+          details:{
+            '実施している':[
+              {key:'jisshi_ym',label:'実施時期（年月頃）',ph:'例：2019年3月頃'},
+              {key:'kasho_naiyou',label:'箇所・内容',ph:'例：キッチン交換、外壁塗装',multiline:true},
+              {key:'kensetsu_sha',label:'建設業者',ph:'例：○○建設'},
+              {key:'kakunin_sho',label:'建築確認済証',type:'select',choices:['有','無']},
+              {key:'kensa_sho',label:'検査済証',type:'select',choices:['有','無']},
+              {key:'sekkei_sho',label:'設計図書',type:'select',choices:['有','無']},
+            ],
+          }},
+        {id:'kaji',label:'⑥火災（ボヤ等含む）の被害',type:'kokuchi',
+          opts:['無','有'],
+          details:{
+            '有':[
+              {key:'jiki',label:'時期（年月頃）',ph:'例：2010年7月頃'},
+              {key:'kasho_jokyo',label:'箇所・状況',ph:'例：台所でボヤ、消火で鎮火',multiline:true},
+            ],
+          }},
+        {id:'ishiwata',label:'⑦石綿使用調査結果の記録',type:'kokuchi',
+          opts:['無','有'],
+          details:{
+            '有':[
+              {key:'chosa_date',label:'調査年月日',ph:'例：2018年5月15日'},
+              {key:'chosa_kikan',label:'調査の実施機関',ph:'例：○○建築診断事務所'},
+              {key:'chosa_han_i',label:'調査の範囲',ph:'例：建物全体'},
+              {key:'bikou',label:'備考',ph:'例：石綿含有なし',multiline:true},
+            ],
+          }},
+        {id:'chosa',label:'⑧建物状況調査',type:'kokuchi',
+          opts:['無','有'],
+          details:{
+            '有':[
+              {key:'hokokusho_type',label:'資料種別',type:'multicheck',choices:['建物状況調査報告書','建物状況調査の結果の概要']},
+              {key:'sakusei_date',label:'作成年月日',ph:'例：2022年3月1日'},
+              {key:'chosa_sha',label:'調査実施者',ph:'例：○○一級建築士事務所'},
+            ],
+          }},
+        {id:'taishin',label:'⑨耐震診断・安全性に関する資料',type:'kokuchi',
+          opts:['無','有'],
+          details:{
+            '有':[
+              {key:'shiryo_type',label:'保存している資料',type:'multicheck',choices:['耐震基準適合証明書','既存住宅性能評価書','耐震診断結果報告書','既存住宅売買瑕疵保険の付保証明書','その他']},
+              {key:'sonota_shiryo',label:'その他資料名',ph:'例：○○診断書'},
+            ],
+          }},
+        {id:'seino',label:'⑩住宅性能評価',type:'kokuchi',
+          opts:['無','有'],
+          details:{
+            '有':[
+              {key:'hyoka_type',label:'評価書の種類',type:'multicheck',choices:['設計住宅性能評価書','建設住宅性能評価書','既存住宅性能評価書']},
+            ],
+          }},
+        {id:'shinchiku',label:'⑪建物新築時の資料',type:'kokuchi',
+          opts:['資料あり','資料なし'],
+          details:{
+            '資料あり':[
+              {key:'kakunin_sho',label:'建築確認済証',type:'select',choices:['有','無']},
+              {key:'kensa_sho',label:'検査済証',type:'select',choices:['有','無']},
+              {key:'sekkei_sho',label:'設計図書',type:'select',choices:['有','無']},
+              {key:'bunjo_sha',label:'分譲業者・宅建業者名',ph:'例：○○不動産'},
+            ],
+          }},
+      ]},
+      {id:'tochi',title:'土地の状況',icon:'🌐',items:[
+        {id:'sakai',label:'⑫境界について',type:'kokuchi',
+          opts:['確認できた','確認できない'],
+          details:{
+            '確認できた':[
+              {key:'torikime_sho',label:'取決め書',type:'select',choices:['無','有']},
+              {key:'funsou',label:'紛争',type:'select',choices:['無','有']},
+              {key:'funsou_naiyou',label:'紛争の内容',ph:'例：境界標の位置で隣地と協議中'},
+            ],
+            '確認できない':[
+              {key:'dekinai_kasho',label:'確認できない箇所',ph:'例：北側隣地との境界'},
+              {key:'torikime_sho',label:'取決め書',type:'select',choices:['無','有']},
+              {key:'funsou',label:'紛争',type:'select',choices:['無','有']},
+              {key:'funsou_naiyou',label:'紛争の内容',ph:'例：北側隣地と境界確認の協議中'},
+            ],
+          }},
+        {id:'ekkyo',label:'⑬越境について',type:'kokuchi',
+          opts:['無','有','不明'],
+          details:{
+            '有':[
+              {key:'ekkyo_mono',label:'越境物',type:'multicheck',choices:['塀','フェンス','擁壁','建物','植栽','給水管','排水管','ガス管','その他']},
+              {key:'torikime_sho',label:'取決め書',type:'select',choices:['無','有']},
+              {key:'funsou',label:'紛争',type:'select',choices:['無','有']},
+              {key:'funsou_naiyou',label:'紛争の内容',ph:'例：越境解消の協議中'},
+              {key:'basho_jokyo',label:'場所・状況',ph:'例：南側フェンスが隣地に10cm越境',multiline:true},
+            ],
+            '不明':[
+              {key:'bikou',label:'状況メモ',ph:'例：確認が必要な箇所あり'},
+            ],
+          }},
+        {id:'yoheki',label:'⑭擁壁について',type:'kokuchi',
+          opts:['無','有'],
+          details:{
+            '有':[
+              {key:'hoko1',label:'方角①',ph:'例：北'},
+              {key:'shoyu1',label:'所有者①',type:'select',choices:['売主','隣地所有者','共有','不明']},
+              {key:'hoko2',label:'方角②',ph:'例：西（なければ空欄）'},
+              {key:'shoyu2',label:'所有者②',type:'select',choices:['売主','隣地所有者','共有','不明','なし']},
+              {key:'torikime_sho',label:'取決め書',type:'select',choices:['無','有']},
+              {key:'funsou',label:'紛争',type:'select',choices:['無','有']},
+              {key:'funsou_naiyou',label:'紛争の内容',ph:'例：維持管理の協議中'},
+              {key:'kiretsu',label:'亀裂等の有無',type:'select',choices:['発見していない','発見している']},
+              {key:'kiretsu_jokyo',label:'亀裂の状況',ph:'例：擁壁南面にひび割れあり'},
+            ],
+          }},
+        {id:'jiban',label:'⑮地盤の沈下・軟弱',type:'kokuchi',
+          opts:['発見していない','発見している'],
+          details:{
+            '発見している':[{key:'jokyo',label:'状況',ph:'例：建物北東角付近の沈下',multiline:true}],
+          }},
+        {id:'dojo',label:'⑯土壌汚染に関する情報',type:'kokuchi',
+          opts:['無','有','不明'],
+          details:{
+            '有':[
+              {key:'riyou_rireki',label:'住宅以外の使用履歴',ph:'例：20年前まで工場として使用'},
+              {key:'sonota_joho',label:'その他の情報',ph:'例：土壌調査済み、問題なし',multiline:true},
+            ],
+            '不明':[
+              {key:'bikou',label:'状況メモ',ph:'例：過去の使用用途が不明'},
+            ],
+          }},
+        {id:'chuchuu',label:'⑰地中埋設物',type:'kokuchi',
+          opts:['発見していない','発見している'],
+          details:{
+            '発見している':[
+              {key:'mono_type',label:'埋設物の種類',type:'multicheck',choices:['旧建物基礎','建物廃材','浄化槽','井戸','その他']},
+              {key:'basho_jokyo',label:'場所・状況',ph:'例：庭の北側に旧基礎あり',multiline:true},
+            ],
+          }},
+      ]},
+      {id:'kankyo',title:'環境・周辺状況',icon:'🌍',items:[
+        {id:'noise',label:'⑱騒音・振動・臭気等',type:'kokuchi',
+          opts:['無','有','不明'],
+          details:{'有':[{key:'jokyo',label:'状況',ph:'例：南側幹線道路の交通騒音',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+        {id:'denpa',label:'⑲電波障害',type:'kokuchi',
+          opts:['無','有','不明'],
+          details:{'有':[{key:'jokyo',label:'状況',ph:'例：テレビ受信障害あり、共同アンテナ対応'}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+        {id:'shinsui',label:'⑳浸水等の被害',type:'kokuchi',
+          opts:['無','有','不明'],
+          details:{'有':[{key:'jokyo',label:'状況',ph:'例：2019年台風で床下浸水',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+        {id:'kenntiku',label:'㉑近隣の建築計画',type:'kokuchi',
+          opts:['無','有','不明'],
+          details:{'有':[{key:'jokyo',label:'状況',ph:'例：北隣に3階建て建築予定',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+        {id:'shuhen',label:'㉒周辺施設（ゴミ処理場・墓地等）',type:'kokuchi',
+          opts:['無','有','不明'],
+          details:{'有':[{key:'naiyou',label:'内容',ph:'例：南東200mにゴミ処理場',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+        {id:'jiken',label:'㉓過去の事件・事故',type:'kokuchi',
+          opts:['無','有','不明'],
+          details:{'有':[{key:'naiyou',label:'内容（詳細は告知ガイドライン参照）',ph:'例：発生時期・場所・死因の別',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+        {id:'rinjin',label:'㉔近隣との申し合わせ事項',type:'kokuchi',
+          opts:['無','有','不明'],
+          details:{'有':[{key:'naiyou',label:'内容',ph:'例：ゴミ集積所当番、自治会費月500円',multiline:true}],'不明':[{key:'bikou',label:'メモ',ph:''}]}},
+        {id:'sonota',label:'㉕その他引き継ぐ事項',type:'kokuchi',
+          opts:['無','有'],
+          details:{'有':[{key:'naiyou',label:'内容',ph:'例：近隣との申し合わせ等',multiline:true}]}},
+      ]},
+    ]},
+  },
+  kubun:{
+    futai:{sections:[
+      {id:'kyuto_k',title:'給湯関係',icon:'🚿',items:[
+        {id:'kyutoki_k',label:'給湯器',sub:'熱源を選択できます'},
+        {id:'yuwakashi_k',label:'屋内式ガス湯沸かし器（個別）'},
+      ]},
+      {id:'kitchen_k',title:'キッチン設備',icon:'🍳',items:[
+        {id:'nagashi_k',label:'流し台'},
+        {id:'konro_k',label:'コンロ',sub:'熱源を選択できます'},
+        {id:'renji_k',label:'レンジフード（換気扇）'},
+        {id:'guriru_k',label:'グリル',sub:'熱源を選択できます'},
+        {id:'oven_k',label:'ビルトインオーブンレンジ',sub:'熱源を選択できます'},
+        {id:'dish_k',label:'ビルトイン食器洗浄乾燥機',sub:'熱源を選択できます'},
+        {id:'josu_k',label:'浄水器'},
+        {id:'disp_k',label:'ディスポーザー'},
+      ]},
+      {id:'bath_k',title:'浴室設備',icon:'🛁',items:[
+        {id:'shower_k',label:'シャワー'},
+        {id:'bsuisen_k',label:'混合水栓（浴室）'},
+        {id:'yusou_k',label:'浴槽',sub:'追炊き・足し湯・保温・湯張り'},
+        {id:'bmensai_k',label:'浴室洗面台'},
+        {id:'bal_k',label:'屋内式風呂がま（バランス釜）'},
+        {id:'kanso_k',label:'浴室内乾燥機'},
+      ]},
+      {id:'senmen_k',title:'洗面設備',icon:'🪥',items:[
+        {id:'senmen1_k',label:'洗面設備',sub:'洗面台・照明・シャワー・コンセント・鏡'},
+      ]},
+      {id:'toilet_k',title:'トイレ設備',icon:'🚽',items:[
+        {id:'toilet1_k',label:'トイレ',sub:'便器・温水洗浄・保温・乾燥・ロータンク'},
+      ]},
+      {id:'sentaku_k',title:'洗濯設備',icon:'🧺',items:[
+        {id:'pan_k',label:'防水パン'},
+        {id:'ssuisen_k',label:'洗濯用水栓'},
+      ]},
+      {id:'aircon_k',title:'空調関係',icon:'❄️',items:[
+        {id:'reidanbo_k',label:'冷暖房機',sub:'熱源を選択できます'},
+        {id:'reibouki_k',label:'冷房機',sub:'熱源を選択できます'},
+        {id:'danbouki_k',label:'暖房機',sub:'熱源を選択できます'},
+        {id:'yukadan_k',label:'床暖房設備',sub:'熱源を選択できます'},
+        {id:'kanki_k',label:'換気扇',sub:'浴室・洗面所・トイレ'},
+        {id:'kanki24_k',label:'24時間換気システム'},
+      ]},
+      {id:'other_main_k',title:'その他（主要設備）',icon:'🔔',items:[
+        {id:'inter_k',label:'インターホン',sub:'モニター有無 ※共用設備の場合あり'},
+      ]},
+      {id:'shomei_k',title:'照明関係',icon:'💡',items:[
+        {id:'light_k',label:'室内照明器具'},
+      ]},
+      {id:'shuno_k',title:'収納関係',icon:'📦',items:[
+        {id:'tana_k',label:'収納棚',sub:'食器棚（造付）・電動昇降戸棚・つり戸棚'},
+        {id:'space_k',label:'収納スペース'},
+        {id:'geta_k',label:'下駄箱'},
+      ]},
+      {id:'tategu_k',title:'建具関係',icon:'🪟',items:[
+        {id:'amido_k',label:'網戸'},
+        {id:'tatami_k',label:'畳・ふすま'},
+        {id:'to_k',label:'戸・扉'},
+        {id:'shoji_k',label:'障子'},
+      ]},
+      {id:'tv_k',title:'テレビ視聴',icon:'📺',items:[
+        {id:'tvco_k',label:'TV共視聴設備',sub:'※共用設備の場合は管理組合経由'},
+      ]},
+      {id:'other_k',title:'その他設備',icon:'🏠',items:[
+        {id:'carpet_k',label:'カーペット（敷込）'},
+        {id:'curtain_k',label:'カーテン'},
+        {id:'rail_k',label:'カーテンレール'},
+        {id:'hoshi_k',label:'物干し'},
+        {id:'osink_k',label:'スロップシンク（屋外）'},
+        {id:'osuisen_k',label:'屋外水栓'},
+        {id:'net_k',label:'インターネット回線'},
+        {id:'kaiji_k',label:'住宅用火災警報器'},
+      ]},
+    ]},
+    kokuchi:{sections:[
+      {id:'building_k',title:'建物の状況',icon:'🏢',items:[
+        {id:'amamori_k',label:'①雨漏り',opts:['現在まで発見していない','過去に雨漏りがあった','現在雨漏り箇所がある']},
+        {id:'shiroari_k',label:'②白蟻被害',opts:['現在まで発見していない','白蟻予防工事：済','白蟻予防工事：未','過去に被害があった','現在被害がある']},
+        {id:'fugu_k',label:'③建物の不具合（傾き・腐食等）',opts:['発見していない','発見している']},
+        {id:'haisu_k',label:'④給排水施設の故障・漏水',opts:['発見していない','発見している']},
+        {id:'reform_k',label:'⑤改築・修繕・リフォーム履歴',opts:['実施していない','実施している','不明']},
+        {id:'kaji_k',label:'⑥火災（ボヤ等含む）の被害',opts:['無','有']},
+        {id:'ishi_k',label:'⑦石綿使用調査結果の記録',opts:['無','有']},
+        {id:'chosa_k',label:'⑧建物状況調査',opts:['無','有']},
+        {id:'taishin_k',label:'⑨耐震診断・安全性に関する資料',opts:['無','有']},
+        {id:'seino_k',label:'⑩住宅性能評価',opts:['無','有']},
+        {id:'shinciku_k',label:'⑪建物新築時の資料',opts:['建築確認済証：有','建築確認済証：無','検査済証：有','検査済証：無','設計図書：有','設計図書：無'],multi:true},
+        {id:'dojo_k',label:'⑫土壌汚染に関する情報',opts:['無','有','不明']},
+      ]},
+      {id:'kankyo_k',title:'環境・周辺状況',icon:'🌍',items:[
+        {id:'noise_k',label:'⑬騒音・振動・臭気等',opts:['無','有','不明']},
+        {id:'kenntiku_k',label:'⑭近隣の建築計画',opts:['無','有','不明']},
+        {id:'denpa_k',label:'⑮電波障害',opts:['無','有','不明']},
+        {id:'shinsui_k',label:'⑯浸水等の被害',opts:['無','有','不明']},
+        {id:'shuhen_k',label:'⑰周辺施設（ゴミ処理場・墓地等）',opts:['無','有','不明']},
+        {id:'jiken_k',label:'⑱過去の事件・事故等',opts:['無','有','不明']},
+        {id:'rinjin_k',label:'⑲近隣との申し合わせ事項',opts:['無','有','不明']},
+        {id:'sonota_k',label:'⑳その他引き継ぐ事項',opts:['無','有']},
+      ]},
+      {id:'kanri',title:'管理費・修繕積立金等',icon:'🏢',items:[
+        {id:'kanrihi',label:'①管理費・修繕積立金等の変更予定',opts:['無','協議中','有']},
+        {id:'daikibo',label:'②大規模修繕の予定',opts:['無','協議中','有']},
+        {id:'jichi',label:'③自治会費等',opts:['無','有']},
+        {id:'kanri_giron',label:'④管理組合集会における討議事項',opts:['無','有']},
+      ]},
+    ]},
+  },
+};
+
+// ===== GENCHI (現地調査) =====
+// 土地建物用／区分所有用で共通表示（type非依存）。現行の案件ハブ版と同じ5項目・同じ用語を使用。
+const ROAD_TYPE_OPTIONS = [
+  { code: 'ア', description: '建築基準法第42条第1項第1号の道路' },
+  { code: 'イ', description: '建築基準法第42条第1項第2号の道路' },
+  { code: 'ウ', description: '建築基準法第42条第1項第3号の道路' },
+  { code: 'エ', description: '建築基準法第42条第1項第4号の道路' },
+  { code: 'オ', description: '建築基準法第42条第1項第5号の道路（位置指定道路）' },
+  { code: 'カ', description: '建築基準法第42条第2項道路' },
+  { code: 'キ', description: '建築基準法第42条の道路に該当しない' },
+  { code: '未確認', description: '道路種類を未確認' },
+];
+const GENCHI_SECTIONS = [
+  { id:'genchi_all', title:'現地調査', icon:'🔍', items:[
+    { id:'road_access', label:'接道状況', type:'genchi' },
+    { id:'infrastructure', label:'インフラ引込状況', type:'genchi' },
+    { id:'drainage_facility', label:'給排水設備の現況', type:'genchi' },
+    { id:'building_exterior', label:'建物外観・劣化状況', type:'genchi' },
+    { id:'view_sunlight', label:'眺望・日照', type:'genchi' },
+  ]},
+];
+DATA.kodate.genchi = { sections: GENCHI_SECTIONS };
+DATA.kubun.genchi = { sections: GENCHI_SECTIONS };
+
+// ===== HELPERS =====
+// 現地調査(genchi)は土地建物用／区分所有用で共通表示のため、type非依存のキーにする
+function stateKeyFor(doc,id){ return doc==='genchi' ? ('genchi_'+id) : (currentType+'_'+doc+'_'+id); }
+function sk(id){ return stateKeyFor(currentDoc,id); }
+function gs(id){ return state[sk(id)]||{}; }
+function ss(id,v){ if(!state[sk(id)])state[sk(id)]={};Object.assign(state[sk(id)],v);updateProgress(); }
+
+function findItem(id){
+  const data=DATA[currentType][currentDoc];
+  for(const sec of data.sections)for(const it of sec.items)if(it.id===id)return it;
+  return null;
+}
+
+// ===== RENDER =====
+function render(){
+  const data=DATA[currentType][currentDoc];
+  let html=`<div class="property-section">
+    <div class="property-label">案件名</div>
+    <input class="property-input" placeholder="案件名を入力..." value="${escH(caseInfo.name||'')}" oninput="caseInfo.name=this.value">
+  </div>`;
+  data.sections.forEach(sec=>{
+    const tot=sec.items.length;
+    const done=sec.items.filter(it=>itemDone(it,gs(it.id))).length;
+    html+=`<div class="section-group" id="sec_${sec.id}">
+      <div class="section-header" onclick="toggleSec('${sec.id}')">
+        <div class="section-icon">${sec.icon}</div>
+        <div class="section-title">${sec.title}</div>
+        <span class="section-count${done===tot?' done':''}" id="cnt_${sec.id}">${done}/${tot}</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="section-items">`;
+    sec.items.forEach(it=>{ html+=renderItem(it); });
+    html+=`</div></div>`;
+  });
+  document.getElementById('mainContent').innerHTML=html;
+  updateProgress();
+}
+
+function escH(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function renderItem(item){
+  if(item.type==='genchi') return renderGenchiItem(item);
+  const s=gs(item.id);
+  const hasNote=s.note&&s.note.trim();
+  const nk=sk(item.id);
+  const isNoteOpen=noteOpen[nk];
+
+  if(item.type==='kokuchi'){
+    // 告知書：選択肢タップで詳細フィールド展開
+    const radios=item.opts.map(opt=>{
+      const vc=valClass(opt);
+      const sel=s.value===opt;
+      return `<button class="radio-btn${sel?' '+vc:''}" onclick="setVal('${item.id}','${opt}')">
+        <span class="radio-dot"></span>${opt}
+      </button>`;
+    }).join('');
+
+    // 詳細フィールド展開
+    let detailHtml='';
+    if(s.value && item.details && item.details[s.value]){
+      const fields=item.details[s.value];
+      detailHtml=`<div class="detail-block">`;
+      fields.forEach(f=>{
+        const fkey=item.id+'__'+f.key;
+        const rawVal=s[f.key];
+        const fval=escH(Array.isArray(rawVal)?'':(rawVal||''));
+        if(f.type==='select'){
+          const btns=f.choices.map(c=>{
+            const sel2=s[f.key]===c;
+            return `<button type="button" class="sub-sel-btn js-sub-select${sel2?' sel':''}" data-id="${escAttr(item.id)}" data-key="${escAttr(f.key)}" data-val="${escAttr(c)}">${c}</button>`;
+          }).join('');
+          detailHtml+=`<div class="detail-field">
+            <div class="detail-label">${f.label}</div>
+            <div class="sub-sel-group">${btns}</div>
+          </div>`;
+        } else if(f.type==='multicheck'){
+          const btns=f.choices.map(c=>{
+            const arr=s[f.key]||[];
+            const sel2=arr.includes(c);
+            return `<button type="button" class="sub-sel-btn js-sub-check${sel2?' sel':''}" data-id="${escAttr(item.id)}" data-key="${escAttr(f.key)}" data-val="${escAttr(c)}">${c}</button>`;
+          }).join('');
+          detailHtml+=`<div class="detail-field">
+            <div class="detail-label">${f.label}（複数可）</div>
+            <div class="sub-sel-group">${btns}</div>
+          </div>`;
+        } else if(f.multiline){
+          detailHtml+=`<div class="detail-field">
+            <div class="detail-label">${f.label}</div>
+            <textarea class="detail-input js-sub-text" style="min-height:60px;resize:none" placeholder="${f.ph||''}" data-id="${escAttr(item.id)}" data-key="${escAttr(f.key)}">${fval}</textarea>
+          </div>`;
+        } else {
+          detailHtml+=`<div class="detail-field">
+            <div class="detail-label">${f.label}</div>
+            <input class="detail-input js-sub-text" placeholder="${f.ph||''}" value="${fval}" data-id="${escAttr(item.id)}" data-key="${escAttr(f.key)}">
+          </div>`;
+        }
+      });
+      detailHtml+=`</div>`;
+    }
+
+    return `<div class="item-card${hasNote?' has-note':''}" id="card_${item.id}">
+      <div class="item-main" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <div class="item-label">${item.label}</div>
+      </div>
+      <div class="radio-group">${radios}</div>
+      ${detailHtml}
+      <div class="note-toggle" onclick="toggleNote('${item.id}')">
+        <span>✏️</span><span class="note-toggle-label">${hasNote?'備考メモあり':'備考を追記'}</span>
+      </div>
+      <div class="note-area${isNoteOpen?' open':''}" id="note_${item.id}">
+        <textarea class="note-textarea" placeholder="備考・メモ..." oninput="ss('${item.id}',{note:this.value})">${escH(s.note||'')}</textarea>
+      </div>
+    </div>`;
+  }
+
+  if(item.opts){
+    // 旧形式フォールバック（区分所有用などで残存する場合）
+    const radios=item.opts.map(opt=>{
+      const vc=valClass(opt);
+      const sel=s.value===opt;
+      const cls=sel?vc:'';
+      return `<button class="radio-btn ${cls}" onclick="setVal('${item.id}','${opt}')">
+        <span class="radio-dot"></span>${opt}
+      </button>`;
+    }).join('');
+    return `<div class="item-card${hasNote?' has-note':''}" id="card_${item.id}">
+      <div class="item-main" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <div class="item-label">${item.label}</div>
+      </div>
+      <div class="radio-group">${radios}</div>
+      <div class="note-toggle" onclick="toggleNote('${item.id}')">
+        <span>✏️</span><span class="note-toggle-label">${hasNote?'備考メモあり':'備考を追記'}</span>
+      </div>
+      <div class="note-area${isNoteOpen?' open':''}" id="note_${item.id}">
+        <textarea class="note-textarea" placeholder="備考・メモ..." oninput="ss('${item.id}',{note:this.value})">${escH(s.note||'')}</textarea>
+      </div>
+    </div>`;
+  }
+
+  // 付帯設備表 有/無
+  const heatOpts=HEAT_ITEMS[item.id];
+  const showHeat=s.value==='有'&&heatOpts;
+  let heatHtml='';
+  if(showHeat){
+    const btns=heatOpts.map(h=>{
+      const sel=(s.heat||[]).includes(h);
+      return `<button class="netsugeng-btn${sel?' sel':''}" onclick="toggleHeat('${item.id}','${h}')">${h}</button>`;
+    }).join('');
+    heatHtml=`<div class="netsugeng-wrap"><span class="netsugeng-label">熱源：</span>${btns}</div>`;
+  }
+
+  const featDef=FEATURE_ITEMS[item.id];
+  const showFeat=s.value==='有'&&featDef;
+  let featHtml='';
+  if(showFeat){
+    const btns=featDef.opts.map(f=>{
+      const sel=(s.feat||[]).includes(f);
+      return `<button class="netsugeng-btn${sel?' sel':''}" onclick="toggleFeat('${item.id}','${f}')">${f}</button>`;
+    }).join('');
+    featHtml=`<div class="netsugeng-wrap"><span class="netsugeng-label">${featDef.label}：</span>${btns}</div>`;
+  }
+
+  return `<div class="item-card${hasNote?' has-note':''}" id="card_${item.id}">
+    <div class="item-main">
+      <div class="item-label">${item.label}${item.sub?`<small>${item.sub}</small>`:''}</div>
+      <div class="toggle-group">
+        <button class="toggle-btn${s.value==='有'?' sel-ari':''}" onclick="setVal('${item.id}','有')">有</button>
+        <button class="toggle-btn${s.value==='無'?' sel-nashi':''}" onclick="setVal('${item.id}','無')">無</button>
+      </div>
+    </div>
+    ${heatHtml}${featHtml}
+    <div class="note-toggle" onclick="toggleNote('${item.id}')">
+      <span>✏️</span><span class="note-toggle-label">${hasNote?'不具合メモあり':'不具合・備考を追記'}</span>
+    </div>
+    <div class="note-area${isNoteOpen?' open':''}" id="note_${item.id}">
+      <textarea class="note-textarea" placeholder="故障・不具合の内容を入力..." oninput="ss('${item.id}',{note:this.value})">${escH(s.note||'')}</textarea>
+    </div>
+  </div>`;
+}
+
+// ===== GENCHI RENDER (現地調査) =====
+// 既存の sub-sel-btn / detail-block / radio-btn / detail-input をそのまま再利用し、
+// 告知書・付帯設備表と同じ見た目になるようにする。新規CSSクラスは legal-note / link-btn のみ。
+
+function subSelSingle(id,key,choices,current){
+  return `<div class="sub-sel-group">${choices.map(c=>`<button type="button" class="sub-sel-btn js-sub-select${current===c?' sel':''}" data-id="${escAttr(id)}" data-key="${key}" data-val="${escAttr(c)}">${escH(c)}</button>`).join('')}</div>`;
+}
+function subSelMulti(id,key,choices,currentArr){
+  const arr=currentArr||[];
+  return `<div class="sub-sel-group">${choices.map(c=>`<button type="button" class="sub-sel-btn js-sub-check${arr.includes(c)?' sel':''}" data-id="${escAttr(id)}" data-key="${key}" data-val="${escAttr(c)}">${escH(c)}</button>`).join('')}</div>`;
+}
+
+function renderRoadAccess(item,s){
+  if(!s.roads||!s.roads.length) s.roads=[{direction:'',ownership:'',roadType:'',widthM:'',frontageM:''}];
+  const directions=['北','北東','東','南東','南','南西','西','北西'];
+  const ownerships=['公道','私道','未確認'];
+  let html=`<div class="legal-note">道路の種類は、指定道路図・役所調査等で別途確認してください。現地入力のみで法的な道路種別を確定するものではありません。</div>`;
+  s.roads.forEach((road,i)=>{
+    html+=`<div class="detail-block">
+      <div class="detail-field">
+        <div class="detail-label">接道${i+1}${s.roads.length>1?` <button type="button" class="link-btn" onclick="removeRoad('${item.id}',${i})">削除</button>`:''}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">方角</div>
+        <div class="sub-sel-group">${directions.map(d=>`<button type="button" class="sub-sel-btn${road.direction===d?' sel':''}" onclick="setRoadField('${item.id}',${i},'direction','${d}')">${d}</button>`).join('')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">公・私道の別</div>
+        <div class="sub-sel-group">${ownerships.map(o=>`<button type="button" class="sub-sel-btn${road.ownership===o?' sel':''}" onclick="setRoadField('${item.id}',${i},'ownership','${o}')">${o}</button>`).join('')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">道路の種類</div>
+        <div class="radio-group">${ROAD_TYPE_OPTIONS.map(opt=>`<button type="button" class="radio-btn${road.roadType===opt.code?' sel-normal':''}" onclick="setRoadField('${item.id}',${i},'roadType','${escAttr(opt.code)}')"><span class="radio-dot"></span>${escH(opt.code)}｜${escH(opt.description)}</button>`).join('')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">幅員（m）</div>
+        <input type="number" min="0" step="0.01" inputmode="decimal" class="detail-input" value="${escAttr(road.widthM||'')}" onchange="setRoadField('${item.id}',${i},'widthM',this.value)">
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">接道長さ（m）</div>
+        <input type="number" min="0" step="0.01" inputmode="decimal" class="detail-input" value="${escAttr(road.frontageM||'')}" onchange="setRoadField('${item.id}',${i},'frontageM',this.value)">
+      </div>
+    </div>`;
+  });
+  html+=`<button type="button" class="link-btn" style="margin:0 14px 10px" onclick="addRoad('${item.id}')">＋ 接道を追加</button>`;
+  return html;
+}
+
+function renderInfrastructure(item,s){
+  const groups=[
+    {key:'drinkingWater',label:'飲用水',choices:['水道（公営）','水道（私営）','井戸','無','未確認']},
+    {key:'gas',label:'ガス',choices:['都市ガス','プロパン（個別）','プロパン（集中）','無','未確認']},
+    {key:'electricity',label:'電気',choices:['有','無','未確認']},
+    {key:'drainage',label:'排水',choices:['公共下水','個別浄化槽','集中浄化槽','汲取式','無','未確認']},
+  ];
+  const showSeptic = s.drainage==='個別浄化槽' || s.drainage==='集中浄化槽';
+  let html=`<div class="detail-block">`;
+  groups.forEach(g=>{
+    html+=`<div class="detail-field"><div class="detail-label">${g.label}</div>${subSelSingle(item.id,g.key,g.choices,s[g.key])}</div>`;
+  });
+  html+=`<div class="detail-field"><div class="detail-label">現在のガス契約先（任意）</div><input class="detail-input js-sub-text" data-id="${escAttr(item.id)}" data-key="gasCurrentProvider" placeholder="例：○○ガス株式会社" value="${escAttr(s.gasCurrentProvider||'')}"></div>`;
+  html+=`<div class="detail-field"><div class="detail-label">現在の電気契約先（任意）</div><input class="detail-input js-sub-text" data-id="${escAttr(item.id)}" data-key="electricityCurrentProvider" placeholder="例：○○電力株式会社" value="${escAttr(s.electricityCurrentProvider||'')}"></div>`;
+  if(showSeptic){
+    html+=`<div class="detail-field"><div class="detail-label">現在の浄化槽管理・契約先（任意）</div><input class="detail-input js-sub-text" data-id="${escAttr(item.id)}" data-key="septicCurrentProvider" placeholder="例：○○環境株式会社" value="${escAttr(s.septicCurrentProvider||'')}"></div>`;
+  }
+  html+=`</div>`;
+  return html;
+}
+
+function renderDrainageFacility(item,s){
+  const mainChoices=['目視可能範囲で異常兆候なし','異常兆候あり','一部のみ確認','通水確認できず','未確認','該当なし'];
+  const locationChoices=['キッチン','浴室','洗面','トイレ','洗濯水栓・防水パン','屋外水栓','給湯設備周辺','排水桝','床下・点検口から見える範囲','その他'];
+  const signChoices=['漏水・水滴','水染み','排水の流れが遅い','詰まり','異音','異臭','錆・腐食','配管の劣化','器具のぐらつき','その他','明確な兆候なし'];
+  return `<div class="detail-block">
+    <div class="detail-field"><div class="detail-label">主回答</div>${subSelSingle(item.id,'main',mainChoices,s.main)}</div>
+    <div class="detail-field"><div class="detail-label">確認箇所</div>${subSelMulti(item.id,'locations',locationChoices,s.locations)}</div>
+    <div class="detail-field"><div class="detail-label">確認した兆候</div>${subSelMulti(item.id,'signs',signChoices,s.signs)}</div>
+  </div>`;
+}
+
+function renderBuildingExterior(item,s){
+  const mainChoices=['目視可能範囲で目立つ劣化兆候なし','劣化兆候あり','一部のみ確認','確認困難','未確認','該当なし'];
+  const partsChoices=['外壁','基礎','屋根','軒裏','雨樋','バルコニー','開口部・サッシ周辺','玄関・外部建具','外階段','擁壁・外構','その他'];
+  const signChoices=['ひび割れ','欠損','剥がれ','浮き','錆','腐食','変色','水染み','雨漏り跡と思われる痕跡','苔・藻','傾き・変形','シーリング劣化','雨樋の破損・詰まり','その他','目立つ兆候なし'];
+  const limitationChoices=['高所','植栽・障害物','隣地との間隔','足場・安全上の理由','天候','立入不可','その他'];
+  return `<div class="detail-block">
+    <div class="detail-field"><div class="detail-label">主回答</div>${subSelSingle(item.id,'main',mainChoices,s.main)}</div>
+    <div class="detail-field"><div class="detail-label">確認部位</div>${subSelMulti(item.id,'parts',partsChoices,s.parts)}</div>
+    <div class="detail-field"><div class="detail-label">確認した兆候</div>${subSelMulti(item.id,'signs',signChoices,s.signs)}</div>
+    <div class="detail-field"><div class="detail-label">確認できなかった理由（任意）</div>${subSelMulti(item.id,'limitations',limitationChoices,s.limitations)}</div>
+  </div>`;
+}
+
+function renderViewSunlight(item,s){
+  const directions=['北','北東','東','南東','南','南西','西','北西'];
+  const sunlightChoices=['確認時に日照あり','確認時に一部日照あり','確認時に日照なし','天候等により確認困難','未確認','該当なし'];
+  const viewChoices=['開けている','一部遮られている','大きく遮られている','確認困難','未確認','該当なし'];
+  const weatherChoices=['晴れ','曇り','雨','雪','その他'];
+  const obstructionChoices=['隣接建物','塀・擁壁','樹木','地形','建築中の建物','その他','目立つ遮蔽物なし'];
+  return `<div class="legal-note">眺望・日照は、確認日時、季節、天候、周辺建物・植栽等により変化します。本入力は確認時点の状況記録であり、将来の眺望・日照を保証するものではありません。</div>
+  <div class="detail-block">
+    <div class="detail-field"><div class="detail-label">開口部の方角（複数選択・入力推奨）</div>${subSelMulti(item.id,'openingDirections',directions,s.openingDirections)}</div>
+    <div class="detail-field"><div class="detail-label">日照</div>${subSelSingle(item.id,'sunlight',sunlightChoices,s.sunlight)}</div>
+    <div class="detail-field"><div class="detail-label">眺望</div>${subSelSingle(item.id,'view',viewChoices,s.view)}</div>
+    <div class="detail-field"><div class="detail-label">天候（選択推奨）</div>${subSelSingle(item.id,'weather',weatherChoices,s.weather)}</div>
+    <div class="detail-field"><div class="detail-label">遮蔽物（任意）</div>${subSelMulti(item.id,'obstructions',obstructionChoices,s.obstructions)}</div>
+  </div>`;
+}
+
+function renderConfirmBlock(id,c){
+  const statuses=['未確認','確認済','該当なし'];
+  return `<div class="detail-block" style="margin:0">
+    <div class="detail-field">
+      <div class="detail-label">確認状況</div>
+      <div class="sub-sel-group">${statuses.map(st=>`<button type="button" class="sub-sel-btn${c.status===st?' sel':''}" onclick="setConfirmStatus('${id}','${st}')">${st}</button>`).join('')}</div>
+    </div>
+    <div class="detail-field">
+      <div class="detail-label">確認日</div>
+      <input type="date" class="detail-input" value="${escAttr(c.date||'')}" onchange="setConfirmField('${id}','date',this.value)">
+    </div>
+    <div class="detail-field">
+      <div class="detail-label">確認時刻</div>
+      <input type="time" class="detail-input" value="${escAttr(c.time||'')}" onchange="setConfirmField('${id}','time',this.value)">
+    </div>
+    <div class="detail-field">
+      <div class="detail-label">確認者</div>
+      <input type="text" class="detail-input" placeholder="例：山田" value="${escAttr(c.by||'')}" oninput="setConfirmField('${id}','by',this.value)">
+    </div>
+  </div>`;
+}
+
+function renderGenchiItem(item){
+  const s=gs(item.id);
+  if(!s.confirm) s.confirm={status:'未確認',date:'',time:'',by:''};
+  const hasNote=s.note&&s.note.trim();
+  const nk=sk(item.id);
+  const isNoteOpen=noteOpen[nk];
+  const isConfirmOpen=confirmOpen[nk];
+
+  let bodyHtml='';
+  if(item.id==='road_access') bodyHtml=renderRoadAccess(item,s);
+  else if(item.id==='infrastructure') bodyHtml=renderInfrastructure(item,s);
+  else if(item.id==='drainage_facility') bodyHtml=renderDrainageFacility(item,s);
+  else if(item.id==='building_exterior') bodyHtml=renderBuildingExterior(item,s);
+  else if(item.id==='view_sunlight') bodyHtml=renderViewSunlight(item,s);
+
+  return `<div class="item-card${hasNote?' has-note':''}" id="card_${item.id}">
+    <div class="item-main" style="flex-direction:column;align-items:flex-start;gap:6px">
+      <div class="item-label">${item.label}</div>
+    </div>
+    ${bodyHtml}
+    <div class="note-toggle" onclick="toggleNote('${item.id}')">
+      <span>✏️</span><span class="note-toggle-label">${hasNote?'備考メモあり':'備考を追記'}</span>
+    </div>
+    <div class="note-area${isNoteOpen?' open':''}" id="note_${item.id}">
+      <textarea class="note-textarea" placeholder="備考・メモ..." oninput="ss('${item.id}',{note:this.value})">${escH(s.note||'')}</textarea>
+    </div>
+    <div class="note-toggle" onclick="toggleConfirm('${item.id}')">
+      <span>🕒</span><span class="note-toggle-label" style="color:var(--navy)">確認情報</span>
+    </div>
+    <div class="note-area${isConfirmOpen?' open':''}" id="confirm_${item.id}">
+      ${renderConfirmBlock(item.id,s.confirm)}
+    </div>
+  </div>`;
+}
+
+// ===== GENCHI ACTIONS =====
+function setRoadField(id,idx,field,val){
+  const s=gs(id);
+  if(!s.roads) s.roads=[{direction:'',ownership:'',roadType:'',widthM:'',frontageM:''}];
+  s.roads[idx][field]=val;
+  ss(id,{roads:s.roads});
+  reRenderItem(id);
+}
+function addRoad(id){
+  const s=gs(id);
+  if(!s.roads) s.roads=[];
+  s.roads.push({direction:'',ownership:'',roadType:'',widthM:'',frontageM:''});
+  ss(id,{roads:s.roads});
+  reRenderItem(id);
+}
+function removeRoad(id,idx){
+  const s=gs(id);
+  if(!s.roads||s.roads.length<=1) return;
+  s.roads.splice(idx,1);
+  ss(id,{roads:s.roads});
+  reRenderItem(id);
+}
+function setConfirmStatus(id,status){
+  const s=gs(id);
+  if(!s.confirm) s.confirm={status:'未確認',date:'',time:'',by:''};
+  s.confirm.status=status;
+  ss(id,{confirm:s.confirm});
+  reRenderItem(id);
+}
+function setConfirmField(id,field,val){
+  const s=gs(id);
+  if(!s.confirm) s.confirm={status:'未確認',date:'',time:'',by:''};
+  s.confirm[field]=val;
+  ss(id,{confirm:s.confirm});
+  // 日時・氏名はテキスト入力のため再描画しない（入力中のフォーカスを維持）
+}
+function toggleConfirm(id){
+  const k=sk(id);
+  confirmOpen[k]=!confirmOpen[k];
+  const area=document.getElementById('confirm_'+id);
+  if(area) area.classList.toggle('open',confirmOpen[k]);
+}
+
+// 現地調査項目は s.value を持たないため、項目種別ごとに「回答済み」を判定する。
+// 進捗表示・入力サマリーの表示に使うのみで、法的判断・業務完了判定は行わない。
+function itemDone(item,s){
+  if(item.type==='genchi') return genchiDone(item.id,s);
+  return !!s.value;
+}
+function genchiDone(id,s){
+  if(id==='road_access') return (s.roads||[]).some(r=>r.direction&&r.roadType);
+  if(id==='infrastructure') return !!(s.drinkingWater&&s.gas&&s.electricity&&s.drainage);
+  if(id==='drainage_facility'||id==='building_exterior') return !!s.main;
+  if(id==='view_sunlight') return !!(s.sunlight&&s.view);
+  return false;
+}
+function genchiDisplayValue(id,s){
+  if(id==='road_access'){
+    const filled=(s.roads||[]).filter(r=>r.direction||r.roadType).length;
+    return filled?`${filled}件入力`:'－';
+  }
+  if(id==='infrastructure'){
+    const parts=[s.drinkingWater,s.gas,s.electricity,s.drainage].filter(Boolean);
+    return parts.length?parts.join('／'):'－';
+  }
+  if(id==='drainage_facility'||id==='building_exterior') return s.main||'－';
+  if(id==='view_sunlight') return [s.sunlight,s.view].filter(Boolean).join('／')||'－';
+  return '－';
+}
+// コピー／メール本文用のテキスト詳細行（配列で返す）
+function genchiTextDetail(id,s){
+  const lines=[];
+  if(id==='road_access'){
+    (s.roads||[]).forEach((r,i)=>{
+      if(!r.direction&&!r.roadType&&!r.ownership&&!r.widthM&&!r.frontageM) return;
+      lines.push(`  　接道${i+1}：方角${r.direction||'－'}／${r.ownership||'－'}／種類${r.roadType||'－'}／幅員${r.widthM||'－'}m／接道長${r.frontageM||'－'}m`);
+    });
+  } else if(id==='infrastructure'){
+    lines.push(`  　飲用水：${s.drinkingWater||'－'}／ガス：${s.gas||'－'}／電気：${s.electricity||'－'}／排水：${s.drainage||'－'}`);
+    if(s.gasCurrentProvider) lines.push(`  　ガス契約先：${s.gasCurrentProvider}`);
+    if(s.electricityCurrentProvider) lines.push(`  　電気契約先：${s.electricityCurrentProvider}`);
+    if(s.septicCurrentProvider) lines.push(`  　浄化槽契約先：${s.septicCurrentProvider}`);
+  } else if(id==='drainage_facility'||id==='building_exterior'){
+    if(s.parts&&s.parts.length) lines.push(`  　確認部位：${s.parts.join('・')}`);
+    if(s.locations&&s.locations.length) lines.push(`  　確認箇所：${s.locations.join('・')}`);
+    if(s.signs&&s.signs.length) lines.push(`  　確認した兆候：${s.signs.join('・')}`);
+    if(s.limitations&&s.limitations.length) lines.push(`  　確認できなかった理由：${s.limitations.join('・')}`);
+  } else if(id==='view_sunlight'){
+    if(s.openingDirections&&s.openingDirections.length) lines.push(`  　開口部方角：${s.openingDirections.join('・')}`);
+    if(s.weather) lines.push(`  　天候：${s.weather}`);
+    if(s.obstructions&&s.obstructions.length) lines.push(`  　遮蔽物：${s.obstructions.join('・')}`);
+  }
+  if(s.confirm&&s.confirm.status&&s.confirm.status!=='未確認'){
+    lines.push(`  　確認情報：${s.confirm.status}${s.confirm.date?'／'+s.confirm.date:''}${s.confirm.time?' '+s.confirm.time:''}${s.confirm.by?'／'+s.confirm.by:''}`);
+  }
+  return lines;
+}
+
+// ===== ACTIONS =====
+function setVal(id,val){
+  ss(id,{value:val});
+  reRenderItem(id);
+  updateSectionCounts();
+}
+
+function toggleHeat(id,heat){
+  const s=gs(id);
+  let arr=s.heat?[...s.heat]:[];
+  const idx=arr.indexOf(heat);
+  if(idx>=0)arr.splice(idx,1); else arr.push(heat);
+  ss(id,{heat:arr});
+  reRenderItem(id);
+}
+
+function toggleFeat(id,feat){
+  const s=gs(id);
+  let arr=s.feat?[...s.feat]:[];
+  const idx=arr.indexOf(feat);
+  if(idx>=0)arr.splice(idx,1); else arr.push(feat);
+  ss(id,{feat:arr});
+  reRenderItem(id);
+}
+
+function toggleCheck(id,check){
+  const s=gs(id);
+  let arr=s.checks?[...s.checks]:[];
+  const idx=arr.indexOf(check);
+  if(idx>=0)arr.splice(idx,1); else arr.push(check);
+  ss(id,{checks:arr, value:arr.length?'選択済み':''});
+  reRenderItem(id);
+  updateSectionCounts();
+}
+
+function setSubVal(id,key,val,isText){
+  const upd={};
+  upd[key]=val;
+  ss(id,upd);
+  if(!isText) reRenderItem(id); // ボタン選択のみ再描画、テキスト入力は再描画しない
+}
+
+function toggleSubCheck(id,key,val){
+  const s=gs(id);
+  let arr=s[key]?[...s[key]]:[];
+  const idx=arr.indexOf(val);
+  if(idx>=0)arr.splice(idx,1); else arr.push(val);
+  const upd={};upd[key]=arr;
+  ss(id,upd);
+  reRenderItem(id);
+}
+
+function reRenderItem(id){
+  const it=findItem(id);
+  if(!it)return;
+  const card=document.getElementById('card_'+id);
+  if(!card)return;
+  const tmp=document.createElement('div');
+  tmp.innerHTML=renderItem(it);
+  card.replaceWith(tmp.firstElementChild);
+}
+
+function toggleNote(id){
+  const k=sk(id);
+  noteOpen[k]=!noteOpen[k];
+  const area=document.getElementById('note_'+id);
+  if(area)area.classList.toggle('open',noteOpen[k]);
+}
+
+function toggleSec(secId){
+  document.getElementById('sec_'+secId).classList.toggle('collapsed');
+}
+
+function updateSectionCounts(){
+  const data=DATA[currentType][currentDoc];
+  data.sections.forEach(sec=>{
+    const tot=sec.items.length;
+    const done=sec.items.filter(it=>itemDone(it,gs(it.id))).length;
+    const el=document.getElementById('cnt_'+sec.id);
+    if(el){el.textContent=done+'/'+tot;el.className='section-count'+(done===tot?' done':'');}
+  });
+}
+
+function updateProgress(){
+  const data=DATA[currentType][currentDoc];
+  let tot=0,done=0;
+  data.sections.forEach(sec=>sec.items.forEach(it=>{tot++;if(itemDone(it,gs(it.id)))done++;}));
+  const pct=tot?Math.round(done/tot*100):0;
+  document.getElementById('progressBar').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=done+' / '+tot+' 項目';
+}
+
+function switchType(t){
+  currentType=t;
+  document.querySelectorAll('.type-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='kodate')||(i===1&&t==='kubun')));
+  render();
+}
+function switchDoc(d){
+  currentDoc=d;
+  document.querySelectorAll('.doc-tab').forEach(b=>b.classList.toggle('active',b.dataset.doc===d));
+  render();
+}
+
+// ===== SUMMARY =====
+function openSummary(){
+  const pname=caseInfo.name||'（案件名未入力）';
+  let html=`<div style="background:var(--navy);color:#fff;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;">
+    <strong>${currentType==='kodate'?'🏠 土地建物用':'🏢 区分所有用'}</strong>　${escH(pname)}
+  </div>`;
+
+  ['genchi','futai','kokuchi'].forEach(doc=>{
+    const label=doc==='futai'?'付帯設備表':doc==='kokuchi'?'物件状況確認書':'現地調査';
+    html+=`<div class="summary-section-title">【${label}】</div>`;
+    let hasAny=false;
+    const data=DATA[currentType][doc];
+    const isGenchi=doc==='genchi';
+    data.sections.forEach(sec=>{
+      sec.items.forEach(it=>{
+        const k=stateKeyFor(doc,it.id);
+        const s=state[k]||{};
+        const done=isGenchi?itemDone(it,s):!!s.value;
+        if(!done&&!s.note)return;
+        hasAny=true;
+        const dispVal=isGenchi?genchiDisplayValue(it.id,s):(s.checks&&s.checks.length?'資料確認済':s.value||'－');
+        const bc=isGenchi?(done?'badge-ari':'badge-nashi'):badgeClass(s.value||'');
+        const heatStr=(!isGenchi&&s.heat&&s.heat.length)?'（'+s.heat.join('・')+'）':'';
+        const featStr=(!isGenchi&&s.feat&&s.feat.length)?s.feat.join('・'):'';
+        const checksStr=(!isGenchi&&s.checks&&s.checks.length)?s.checks.join('　'):'';
+        const confirmStr=(isGenchi&&s.confirm&&s.confirm.status&&s.confirm.status!=='未確認')?`確認情報：${s.confirm.status}${s.confirm.date?'／'+s.confirm.date:''}`:'';
+        html+=`<div class="summary-row">
+          <span class="summary-badge ${bc}">${escH(dispVal)}</span>
+          <div>
+            <div class="summary-item-name">${it.label}</div>
+            ${heatStr?`<div class="summary-sub">熱源：${heatStr}</div>`:''}
+            ${featStr?`<div class="summary-sub">✓ ${featStr}</div>`:''}
+            ${checksStr?`<div class="summary-sub">📄 ${checksStr}</div>`:''}
+            ${s.detail?`<div class="summary-sub">📍 ${escH(s.detail)}</div>`:''}
+            ${confirmStr?`<div class="summary-sub">🕒 ${escH(confirmStr)}</div>`:''}
+            ${s.note?`<div class="summary-note">✏️ ${escH(s.note)}</div>`:''}
+          </div>
+        </div>`;
+      });
+    });
+    if(!hasAny)html+=`<div style="color:var(--gray-500);font-size:13px;padding:8px 0">（未入力）</div>`;
+  });
+
+  document.getElementById('summaryContent').innerHTML=html;
+  document.getElementById('summaryModal').classList.add('open');
+
+  // 保存済みの送信先メールアドレスを復元
+  const mailInput=document.getElementById('mailToInput');
+  if(mailInput){
+    try{
+      mailInput.value = localStorage.getItem('fudosan_mailto') || '';
+    }catch(e){ mailInput.value=''; }
+  }
+}
+
+function closeSummary(){ document.getElementById('summaryModal').classList.remove('open'); }
+
+function copySummary(){
+  const pname=caseInfo.name||'（案件名未入力）';
+  let t=`【現地確認チェック結果】\n物件種別：${currentType==='kodate'?'土地建物用':'区分所有用'}\n案件名：${pname}\n\n`;
+  ['genchi','futai','kokuchi'].forEach(doc=>{
+    t+=`■${doc==='futai'?'付帯設備表':doc==='kokuchi'?'物件状況確認書':'現地調査'}\n`;
+    const data=DATA[currentType][doc];
+    const isGenchi=doc==='genchi';
+    data.sections.forEach(sec=>{
+      let sh=false;
+      sec.items.forEach(it=>{
+        const k=stateKeyFor(doc,it.id);
+        const s=state[k]||{};
+        const done=isGenchi?itemDone(it,s):!!s.value;
+        if(!done&&!s.note)return;
+        if(!sh){t+=`【${sec.title}】\n`;sh=true;}
+        const dispVal=isGenchi?genchiDisplayValue(it.id,s):(s.value||'－');
+        t+=`・${it.label}：${dispVal}`;
+        if(!isGenchi&&s.heat&&s.heat.length)t+=`（${s.heat.join('・')}）`;
+        if(!isGenchi&&s.feat&&s.feat.length)t+=` [${s.feat.join('・')}]`;
+        t+='\n';
+        if(isGenchi){
+          genchiTextDetail(it.id,s).forEach(line=>{t+=line+'\n';});
+        } else if(it.details&&it.details[s.value]){
+          it.details[s.value].forEach(f=>{
+            const v=s[f.key];
+            if(!v||(Array.isArray(v)&&!v.length))return;
+            const disp=Array.isArray(v)?v.join('・'):v;
+            t+=`  　${f.label}：${disp}\n`;
+          });
+        }
+        if(s.note)t+=`  　備考：${s.note}\n`;
+      });
+    });
+    t+='\n';
+  });
+
+  // クリップボードAPI → 失敗時はtextareaフォールバック
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t)
+      .then(()=>alert('コピーしました！'))
+      .catch(()=>fallbackCopy(t));
+  } else {
+    fallbackCopy(t);
+  }
+}
+
+function fallbackCopy(text){
+  const ta=document.createElement('textarea');
+  ta.value=text;
+  ta.style.cssText='position:fixed;top:0;left:0;opacity:0;font-size:16px';
+  document.body.appendChild(ta);
+  ta.focus();ta.select();
+  try{
+    document.execCommand('copy');
+    alert('コピーしました！');
+  }catch(e){
+    alert('コピーできませんでした。テキストを手動で選択してください。');
+  }
+  document.body.removeChild(ta);
+}
+
+
+function saveJSON(){
+  const pname=caseInfo.name||'案件名未入力';
+  const data={schemaVersion:SCHEMA_VERSION, case:{...caseInfo}, state, currentType, currentDoc, savedAt:new Date().toLocaleString('ja-JP')};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`現地確認_${pname}_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function loadJSON(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      // schemaVersionが一致しない・存在しないファイルは読込拒否する（推測での自動変換はしない）
+      if(data.schemaVersion!==SCHEMA_VERSION){
+        throw new Error(`schemaVersionが一致しません（ファイル：${data.schemaVersion||'なし'}／このアプリ：${SCHEMA_VERSION}）。旧版（案件ハブ版等）のJSONはこのUI候補版では読み込めません。`);
+      }
+      if(!data.state)throw new Error('stateがありません。');
+      state=data.state;
+      caseInfo=(data.case&&typeof data.case==='object')?{name:data.case.name||''}:{name:''};
+      if(data.currentType)currentType=data.currentType;
+      if(data.currentDoc)currentDoc=data.currentDoc;
+      // タブ表示を同期
+      document.querySelectorAll('.type-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&currentType==='kodate')||(i===1&&currentType==='kubun')));
+      document.querySelectorAll('.doc-tab').forEach(b=>b.classList.toggle('active',b.dataset.doc===currentDoc));
+      render();
+      alert('読み込みました！（保存日時：'+data.savedAt+'）');
+    }catch(err){
+      alert('読み込みに失敗しました：'+err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value=''; // 同じファイルを再選択できるようにリセット
+}
+
+
+function buildSummaryText(){
+  const pname=caseInfo.name||'（案件名未入力）';
+  let t=`【現地確認チェック結果】\n物件種別：${currentType==='kodate'?'土地建物用':'区分所有用'}\n案件名：${pname}\n\n`;
+  ['genchi','futai','kokuchi'].forEach(doc=>{
+    t+=`■${doc==='futai'?'付帯設備表':doc==='kokuchi'?'物件状況確認書':'現地調査'}\n`;
+    const data=DATA[currentType][doc];
+    const isGenchi=doc==='genchi';
+    data.sections.forEach(sec=>{
+      let sh=false;
+      sec.items.forEach(it=>{
+        const k=stateKeyFor(doc,it.id);
+        const s=state[k]||{};
+        const done=isGenchi?itemDone(it,s):!!s.value;
+        if(!done&&!s.note)return;
+        if(!sh){t+=`【${sec.title}】\n`;sh=true;}
+        const dispVal=isGenchi?genchiDisplayValue(it.id,s):(s.value||'－');
+        t+=`・${it.label}：${dispVal}`;
+        if(!isGenchi&&s.heat&&s.heat.length)t+=`（${s.heat.join('・')}）`;
+        if(!isGenchi&&s.feat&&s.feat.length)t+=` [${s.feat.join('・')}]`;
+        t+='\n';
+        if(isGenchi){
+          genchiTextDetail(it.id,s).forEach(line=>{t+=line+'\n';});
+        } else if(it.details&&it.details[s.value]){
+          it.details[s.value].forEach(f=>{
+            const v=s[f.key];
+            if(!v||(Array.isArray(v)&&!v.length))return;
+            const disp=Array.isArray(v)?v.join('・'):v;
+            t+=`  　${f.label}：${disp}\n`;
+          });
+        }
+        if(s.note)t+=`  　備考：${s.note}\n`;
+      });
+    });
+    t+='\n';
+  });
+  return {pname, text:t};
+}
+
+function mailSummary(){
+  const {pname, text} = buildSummaryText();
+  const subject = `現地確認チェック結果_${pname}`;
+
+  // 宛先アドレスの取得・保存
+  const mailInput=document.getElementById('mailToInput');
+  const toAddr = mailInput ? mailInput.value.trim() : '';
+  try{
+    if(toAddr) localStorage.setItem('fudosan_mailto', toAddr);
+  }catch(e){ /* localStorage不可の環境は無視 */ }
+
+  // mailtoのURL長制限対策：長すぎる場合は警告し、要約のみ送る
+  let body = text;
+  const maxLen = 1500; // 多くのメーラーで安全な目安
+  let truncated = false;
+  if(body.length > maxLen){
+    body = body.slice(0, maxLen) + '\n\n…（文字数制限のため以下省略。詳細はJSON保存ファイルをご確認ください）';
+    truncated = true;
+  }
+  const mailtoUrl = `mailto:${toAddr}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailtoUrl;
+  if(truncated){
+    setTimeout(()=>alert('入力内容が多いため、メール本文は一部省略されています。\n全項目を共有する場合は「📋 テキストをコピー」または「💾 保存」をご利用ください。'), 300);
+  }
+}
+
+function printSummary(){
+  // サマリーHTMLを別ウィンドウで印刷
+  const pname=caseInfo.name||'（案件名未入力）';
+  const content=document.getElementById('summaryContent').innerHTML;
+  const win=window.open('','_blank','width=800,height=900');
+  win.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+  <title>現地確認チェック_${pname}</title>
+  <style>
+    body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;padding:20px;font-size:13px;color:#1a2744}
+    h2{font-size:16px;border-bottom:2px solid #1a2744;padding-bottom:8px;margin-bottom:16px}
+    .summary-section-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;padding:12px 0 4px;letter-spacing:.05em}
+    .summary-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid #f0f0f0;font-size:13px}
+    .summary-badge{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+    .badge-ari{background:#e8f5ee;color:#2e7d52}
+    .badge-nashi{background:#f2f2f2;color:#888}
+    .badge-warning{background:#fdecea;color:#c0392b}
+    .badge-caution{background:#fef3e8;color:#e67e22}
+    .summary-item-name{color:#1a2744;flex:1}
+    .summary-sub{color:#1a6fa8;font-size:12px;margin-top:2px}
+    .summary-note{color:#e67e22;font-size:12px;margin-top:2px}
+    @media print{button{display:none}}
+  </style></head><body>
+  <h2>📋 現地確認チェック結果　${pname}</h2>
+  <p style="font-size:11px;color:#888;margin-bottom:16px">出力日時：${new Date().toLocaleString('ja-JP')}</p>
+  ${content}
+  <br><button onclick="window.print()" style="padding:10px 20px;background:#1a2744;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-top:8px">🖨️ 印刷 / PDF保存</button>
+  </body></html>`);
+  win.document.close();
+}
+
+function confirmReset(){
+  if(!confirm('現在の書類の入力内容をリセットしますか？'))return;
+  const data=DATA[currentType][currentDoc];
+  data.sections.forEach(sec=>sec.items.forEach(it=>delete state[sk(it.id)]));
+  render();
+}
+
+// ===== EVENT DELEGATION (告知書 詳細ボタン用) =====
+// onclick属性に頼らず、mainContent全体でクリック・入力イベントを一括捕捉する。
+// これによりカード再描画後も確実にイベントが効く。
+document.getElementById('mainContent').addEventListener('click', function(e){
+  const selBtn = e.target.closest('.js-sub-select');
+  if(selBtn){
+    const id = selBtn.dataset.id, key = selBtn.dataset.key, val = selBtn.dataset.val;
+    setSubVal(id, key, val, false);
+    return;
+  }
+  const checkBtn = e.target.closest('.js-sub-check');
+  if(checkBtn){
+    const id = checkBtn.dataset.id, key = checkBtn.dataset.key, val = checkBtn.dataset.val;
+    toggleSubCheck(id, key, val);
+    return;
+  }
+});
+document.getElementById('mainContent').addEventListener('input', function(e){
+  if(e.target.classList.contains('js-sub-text')){
+    const id = e.target.dataset.id, key = e.target.dataset.key;
+    setSubVal(id, key, e.target.value, true);
+  }
+});
+
+// INIT
+render();
+</script>
+</body>
+</html>
