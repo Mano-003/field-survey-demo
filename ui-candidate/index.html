@@ -912,15 +912,15 @@ function renderRoadAccess(item,s){
       </div>
       <div class="detail-field">
         <div class="detail-label">方角</div>
-        <div class="sub-sel-group">${directions.map(d=>`<button type="button" class="sub-sel-btn${road.direction===d?' sel':''}" onclick="setRoadField('${item.id}',${i},'direction','${d}')">${d}</button>`).join('')}</div>
+        <div class="sub-sel-group">${directions.map(d=>`<button type="button" class="sub-sel-btn${road.direction===d?' sel':''}" onclick="setRoadField('${item.id}',${i},'direction','${road.direction===d?'':d}')">${d}</button>`).join('')}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">公・私道の別</div>
-        <div class="sub-sel-group">${ownerships.map(o=>`<button type="button" class="sub-sel-btn${road.ownership===o?' sel':''}" onclick="setRoadField('${item.id}',${i},'ownership','${o}')">${o}</button>`).join('')}</div>
+        <div class="sub-sel-group">${ownerships.map(o=>`<button type="button" class="sub-sel-btn${road.ownership===o?' sel':''}" onclick="setRoadField('${item.id}',${i},'ownership','${road.ownership===o?'':o}')">${o}</button>`).join('')}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">道路の種類</div>
-        <div class="radio-group">${ROAD_TYPE_OPTIONS.map(opt=>`<button type="button" class="radio-btn${road.roadType===opt.code?' sel-normal':''}" onclick="setRoadField('${item.id}',${i},'roadType','${escAttr(opt.code)}')"><span class="radio-dot"></span>${escH(opt.code)}｜${escH(opt.description)}</button>`).join('')}</div>
+        <div class="radio-group">${ROAD_TYPE_OPTIONS.map(opt=>`<button type="button" class="radio-btn${road.roadType===opt.code?' sel-normal':''}" onclick="setRoadField('${item.id}',${i},'roadType','${escAttr(road.roadType===opt.code?'':opt.code)}')"><span class="radio-dot"></span>${escH(opt.code)}｜${escH(opt.description)}</button>`).join('')}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">幅員（m）</div>
@@ -1018,13 +1018,13 @@ function renderTransportGroupEntries(itemId,groupKey,s){
         <div class="detail-label">${cfg.label}${i+1}${list.length>1?` <button type="button" class="link-btn" onclick="removeTransportEntry('${itemId}','${groupKey}',${i})">削除</button>`:''}</div>
       </div>`;
     if(cfg.hasType){
-      html+=`<div class="detail-field"><div class="detail-label">施設種別</div><div class="sub-sel-group">${OTHER_FACILITY_TYPES.map(t=>`<button type="button" class="sub-sel-btn${entry.type===t?' sel':''}" onclick="setTransportChoice('${itemId}','${groupKey}',${i},'type','${t}')">${t}</button>`).join('')}</div></div>`;
+      html+=`<div class="detail-field"><div class="detail-label">施設種別</div><div class="sub-sel-group">${OTHER_FACILITY_TYPES.map(t=>`<button type="button" class="sub-sel-btn${entry.type===t?' sel':''}" onclick="setTransportChoice('${itemId}','${groupKey}',${i},'type','${entry.type===t?'':t}')">${t}</button>`).join('')}</div></div>`;
     }
     cfg.fields.forEach(f=>{
       html+=`<div class="detail-field"><div class="detail-label">${f.label}</div><input type="text" class="detail-input" placeholder="${f.ph||''}" value="${escAttr(entry[f.key]||'')}" oninput="setTransportText('${itemId}','${groupKey}',${i},'${f.key}',this.value)"></div>`;
     });
     html+=`<div class="detail-field"><div class="detail-label">徒歩（分）</div><input type="number" min="0" step="1" inputmode="numeric" class="detail-input" value="${escAttr(entry.walkMinutes||'')}" onchange="setTransportNumber('${itemId}','${groupKey}',${i},'walkMinutes',this.value)"></div>`;
-    html+=`<div class="detail-field"><div class="detail-label">情報源（任意）</div><div class="sub-sel-group">${MINUTES_SOURCE_OPTIONS.map(m=>`<button type="button" class="sub-sel-btn${entry.minutesSource===m?' sel':''}" onclick="setTransportChoice('${itemId}','${groupKey}',${i},'minutesSource','${m}')">${m}</button>`).join('')}</div></div>`;
+    html+=`<div class="detail-field"><div class="detail-label">情報源（任意）</div><div class="sub-sel-group">${MINUTES_SOURCE_OPTIONS.map(m=>`<button type="button" class="sub-sel-btn${entry.minutesSource===m?' sel':''}" onclick="setTransportChoice('${itemId}','${groupKey}',${i},'minutesSource','${entry.minutesSource===m?'':m}')">${m}</button>`).join('')}</div></div>`;
     html+=`</div>`;
   });
   html+=`<button type="button" class="link-btn" style="margin:0 14px 10px" onclick="addTransportEntry('${itemId}','${groupKey}')">＋ ${cfg.label}を追加</button>`;
@@ -1037,7 +1037,7 @@ function renderSingleFacility(itemId,key,label,s){
     <div class="detail-field"><div class="detail-label">${label}</div></div>
     <div class="detail-field"><div class="detail-label">施設名</div><input type="text" class="detail-input" placeholder="例：〇〇${label}" value="${escAttr(entry.name||'')}" oninput="setSingleFacilityText('${itemId}','${key}','name',this.value)"></div>
     <div class="detail-field"><div class="detail-label">徒歩（分）</div><input type="number" min="0" step="1" inputmode="numeric" class="detail-input" value="${escAttr(entry.walkMinutes||'')}" onchange="setSingleFacilityNumber('${itemId}','${key}','walkMinutes',this.value)"></div>
-    <div class="detail-field"><div class="detail-label">情報源（任意）</div><div class="sub-sel-group">${MINUTES_SOURCE_OPTIONS.map(m=>`<button type="button" class="sub-sel-btn${entry.minutesSource===m?' sel':''}" onclick="setSingleFacilityChoice('${itemId}','${key}','minutesSource','${escAttr(m)}')">${m}</button>`).join('')}</div></div>
+    <div class="detail-field"><div class="detail-label">情報源（任意）</div><div class="sub-sel-group">${MINUTES_SOURCE_OPTIONS.map(m=>`<button type="button" class="sub-sel-btn${entry.minutesSource===m?' sel':''}" onclick="setSingleFacilityChoice('${itemId}','${key}','minutesSource','${escAttr(entry.minutesSource===m?'':m)}')">${m}</button>`).join('')}</div></div>
   </div>`;
 }
 function renderTransportEnvironment(item,s){
@@ -1186,23 +1186,31 @@ function removeTransportEntry(id,groupKey,idx){
   reRenderItem(id);
   showGenchiToast(`✓ ${TRANSPORT_GROUPS[groupKey].label}${removedNumber}を削除しました`);
 }
+// gs()は未保存時に使い捨てオブジェクトを返すため、addTransportEntryを一度も
+// 押していない（画面表示上のデフォルト1件目のままの）状態でも、最初のタップ・
+// 入力で必ずstateへ実体化されるよう、存在しない場合はデフォルト値で補ってから書き込む
+function ensureTransportEntry(s,groupKey,idx){
+  if(!s[groupKey]) s[groupKey]=[];
+  if(!s[groupKey][idx]) s[groupKey][idx]=emptyTransportEntry(groupKey);
+  return s[groupKey];
+}
 function setTransportText(id,groupKey,idx,field,val){
   const s=gs(id);
-  if(!s[groupKey]||!s[groupKey][idx]) return;
+  ensureTransportEntry(s,groupKey,idx);
   s[groupKey][idx][field]=val;
   ss(id,{[groupKey]:s[groupKey]});
   // テキスト入力はフォーカス維持のため再描画しない
 }
 function setTransportNumber(id,groupKey,idx,field,val){
   const s=gs(id);
-  if(!s[groupKey]||!s[groupKey][idx]) return;
+  ensureTransportEntry(s,groupKey,idx);
   s[groupKey][idx][field]=val;
   ss(id,{[groupKey]:s[groupKey]});
   reRenderItem(id);
 }
 function setTransportChoice(id,groupKey,idx,field,val){
   const s=gs(id);
-  if(!s[groupKey]||!s[groupKey][idx]) return;
+  ensureTransportEntry(s,groupKey,idx);
   s[groupKey][idx][field]=val;
   ss(id,{[groupKey]:s[groupKey]});
   reRenderItem(id);
@@ -1722,7 +1730,10 @@ document.getElementById('mainContent').addEventListener('click', function(e){
   const selBtn = e.target.closest('.js-sub-select');
   if(selBtn){
     const id = selBtn.dataset.id, key = selBtn.dataset.key, val = selBtn.dataset.val;
-    setSubVal(id, key, val, false);
+    // 現地調査のみ、選択済みチップの再タップで未選択に戻す（誤タップ修正のため）。
+    // 告知書の詳細欄も同じjs-sub-selectを使うため、currentDocで挙動を分ける。
+    const nextVal = (currentDoc==='genchi' && gs(id)[key]===val) ? '' : val;
+    setSubVal(id, key, nextVal, false);
     return;
   }
   const checkBtn = e.target.closest('.js-sub-check');
