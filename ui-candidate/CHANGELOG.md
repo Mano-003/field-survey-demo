@@ -3,6 +3,14 @@
 正本は brain-garden（非公開）の `apps/field-survey-hub-ui-candidate/index.html`
 （ブランチ：`claude/field-survey-ui-candidate`）です。このファイルは反映履歴のみを記録します。
 
+## [Unreleased] - 2026-07-16 (2)
+
+- ヘッダーに検証用バッジ「🧪 UI Candidate v2.0（Beta）」を追加（正本の変更を反映）。
+  実機テスト・スクリーンショット共有時に現行版と区別するためのもので、正式版移行時に
+  容易に削除できる構成。
+- 正本とのSHA-256一致を確認済み：
+  `2693a2b90951785afc2bd9b7a3305eff033fffc24dada8a72d8d08c00d9793ee`
+
 ## [Unreleased] - 2026-07-16
 
 - 正本の実装（設計レビュー①〜⑧で承認された内容）を無改変でコピーして初回公開。

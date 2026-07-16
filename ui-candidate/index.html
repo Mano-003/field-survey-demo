@@ -144,6 +144,10 @@
   /* GENCHI (現地調査) - reuses existing tokens only, no new palette */
   .legal-note{background:var(--cream);border:1px solid var(--gold-light);border-radius:8px;padding:10px 12px;margin:0 14px 10px;font-size:12px;color:var(--gray-700);line-height:1.5}
   .link-btn{background:none;border:none;padding:4px 2px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;text-decoration:underline}
+
+  /* ==== UI CANDIDATE BADGE START — 検証用。正式版移行時はこのブロックとHTML側の対応divごと削除可 ==== */
+  .ui-candidate-badge{display:inline-block;margin-top:4px;background:rgba(232,184,92,.92);color:var(--navy);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.02em;white-space:nowrap}
+  /* ==== UI CANDIDATE BADGE END ==== */
 </style>
 </head>
 <body>
@@ -153,6 +157,9 @@
     <div>
       <div class="header-title">📋 現地確認チェック</div>
       <div class="header-subtitle">現地調査 ＋ 付帯設備表 ＋ 物件状況確認書</div>
+      <!-- UI CANDIDATE BADGE START — 検証用。正式版移行時はこのdivとCSS側の対応ブロックごと削除可 -->
+      <div class="ui-candidate-badge">🧪 UI Candidate v2.0（Beta）</div>
+      <!-- UI CANDIDATE BADGE END -->
     </div>
     <div id="progressLabel" class="progress-label">0 / 0 項目</div>
   </div>
